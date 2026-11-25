@@ -9,10 +9,58 @@ import readabilityLicense from '../licenses/readability.txt';
 
 const e = escapeHtml;
 const main = document.querySelector('#main');
+const STORAGE_KEY = 'wp-search-lab:session:v1';
 const emptyState = () => ({ view: 'start', target: 'before', previewTab: 'serp', previewIndex: 0, pagespeed: {}, drafts: { before: [], after: [] }, before: [], after: [], plan: [], history: [], filter: 'issues', tool: 'ChatGPT', scope: '只產出修改建議與草稿；未經我確認，不發佈正式網站。', notes: '', busy: false });
 let state = emptyState();
 const sampleUrl = 'https://example.test/products/p-100';
 const label = status => `<span class="status ${status}">${e(STATUS_LABELS[status] || status)}</span>`;
+
+function compactAudit(a) {
+  if (!a || !a.page) return a;
+  const { html: _drop, ...pageMeta } = a.page;
+  return { ...a, page: { ...pageMeta, html: '' } };
+}
+function saveSession() {
+  try {
+    if (!state.before.length) { localStorage.removeItem(STORAGE_KEY); return; }
+    const payload = {
+      app: 'WP Search Lab',
+      savedAt: new Date().toISOString(),
+      before: state.before.map(compactAudit),
+      after: state.after.map(compactAudit),
+      plan: state.plan,
+      history: state.history.slice(0, 10).map(h => ({ ...h, audits: (h.audits || []).map(compactAudit) })),
+      pagespeed: state.pagespeed,
+      tool: state.tool,
+      scope: state.scope,
+      notes: state.notes,
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+  } catch {}
+}
+function clearSession() {
+  try { localStorage.removeItem(STORAGE_KEY); } catch {}
+}
+function restoreSessionData(data, sourceLabel) {
+  if (!data || !Array.isArray(data.before) || !data.before.length || !data.before[0]?.page?.url || !Array.isArray(data.before[0]?.results)) {
+    throw new Error('這不是有效的 WP Search Lab 進度檔（需包含改善前檢測資料）。');
+  }
+  state = {
+    ...emptyState(),
+    view: 'results',
+    before: data.before.map(compactAudit),
+    after: Array.isArray(data.after) ? data.after.map(compactAudit) : [],
+    plan: Array.isArray(data.plan) && data.plan.length ? data.plan : initialPlan(data.before),
+    history: Array.isArray(data.history) ? data.history : [],
+    pagespeed: data.pagespeed && typeof data.pagespeed === 'object' ? data.pagespeed : {},
+    tool: typeof data.tool === 'string' ? data.tool : 'ChatGPT',
+    scope: typeof data.scope === 'string' ? data.scope : emptyState().scope,
+    notes: typeof data.notes === 'string' ? data.notes : '',
+  };
+  saveSession();
+  render();
+  notify(`已恢復${sourceLabel}（${state.before.length} 頁）。你可以繼續調整計畫，或直接到「05 重新驗證」比對新版網頁。`);
+}
 
 function extractWithReadability(html) {
   try {
@@ -47,7 +95,7 @@ function importPanel(target) {
   const drafts = state.drafts[target], after = target === 'after';
   return `<section class="panel" id="import-panel"><h2>${after ? '重新檢查線上的同一個頁面' : '貼上網址，馬上檢查'}</h2><p class="panel-subtitle">不需登入 WordPress、不用懂程式碼。抓回網頁與 robots.txt 後會告訴你最該先改的 3 件事。</p>
   <div class="url-check"><label class="field" for="fetch-url">要檢查的網頁網址<input id="fetch-url" type="url" placeholder="https://你的網站.com/文章或頁面/" value="${after && state.before[0] ? e(state.before[0].page.url) : ''}" autocomplete="url"></label><div class="check-row"><label><input id="fetch-product" type="checkbox" ${after && state.before[0]?.page.context.product ? 'checked' : ''}>這是產品／商品頁（加測規格表與詢價入口）</label><label><input id="fetch-multilingual" type="checkbox" ${after && state.before[0]?.page.context.multilingual ? 'checked' : ''}>多語系頁面</label></div><div class="url-buttons"><button id="fetch-page" data-target="${target}" class="primary" ${!after && state.before.length ? 'disabled' : ''}>${after ? '重新讀取並比較' : '開始檢查這個網頁 →'}</button>${!after ? `<button id="fetch-sitemap" data-target="${target}" class="quiet" ${state.before.length ? 'disabled' : ''}>從 Sitemap 抽樣體檢全站（最多 10 頁）</button>` : ''}</div><p class="fetch-note">僅讀取公開網頁、robots.txt 與 Sitemap，不需帳號密碼、不會修改你的網站。單頁或全站抽樣皆可自動檢查。</p></div>
-  <details class="advanced-import"><summary>其他方式：上傳已儲存的 HTML 檔案或貼上原始碼</summary><div class="upload-zone"><p>離線使用或一次檢查多頁（最多 20 頁、每頁 2 MB）。</p><label class="field" for="files">選取網頁檔案（.html / .htm）<input id="files" type="file" accept=".html,.htm,text/html" multiple data-target="${target}"></label><hr class="divider"><label class="field" for="page-url">或直接貼上原始碼（請先填入該頁網址）<input id="page-url" type="url" placeholder="https://your-site.com/page/" autocomplete="off"></label><label class="field" for="source-html">HTML 原始碼<textarea id="source-html" rows="5" placeholder="貼上網頁原始碼（其中的 Script 不會執行）。" spellcheck="false"></textarea></label><button id="add-source" data-target="${target}" class="quiet">加入待檢測清單</button></div></details>
+  <details class="advanced-import"><summary>其他方式：上傳 HTML、貼原始碼、或匯入上次進度檔（JSON）</summary><div class="upload-zone"><p>離線使用或一次檢查多頁（最多 20 頁、每頁 2 MB）。</p><label class="field" for="files">選取網頁檔案（.html / .htm）<input id="files" type="file" accept=".html,.htm,text/html" multiple data-target="${target}"></label>${!after ? '<hr class="divider"><label class="field" for="session-file">跨裝置恢復：匯入先前的進度檔（wp-search-lab-evidence.json）<input id="session-file" type="file" accept=".json,application/json"></label>' : ''}<hr class="divider"><label class="field" for="page-url">或直接貼上原始碼（請先填入該頁網址）<input id="page-url" type="url" placeholder="https://your-site.com/page/" autocomplete="off"></label><label class="field" for="source-html">HTML 原始碼<textarea id="source-html" rows="5" placeholder="貼上網頁原始碼（其中的 Script 不會執行）。" spellcheck="false"></textarea></label><button id="add-source" data-target="${target}" class="quiet">加入待檢測清單</button></div></details>
   ${after ? '<div class="soft">請使用與改善前相同的網址與頁面類型，才能準確比對前後差異。</div>' : ''}
   <div id="draft-list">${drafts.map((d, i) => `<div class="draft-row"><div><small>${e(d.name || d.sourceKind)} · ${(new TextEncoder().encode(d.html).byteLength / 1024).toFixed(1)} KB</small><label class="field" for="draft-url-${i}">確認這份網頁的原始網址<input id="draft-url-${i}" data-draft-url="${i}" data-target="${target}" type="url" value="${e(d.url)}" placeholder="https://your-site.com/page/" required></label><div class="check-row"><label><input type="checkbox" data-draft-context="product" data-index="${i}" data-target="${target}" ${d.context.product ? 'checked' : ''}>產品頁</label><label><input type="checkbox" data-draft-context="multilingual" data-index="${i}" data-target="${target}" ${d.context.multilingual ? 'checked' : ''}>多語系頁面</label></div></div><button class="quiet" data-remove-draft="${i}" data-target="${target}" aria-label="移除 ${e(d.name || '頁面')}">移除</button></div>`).join('')}</div>
   <div class="actions" ${drafts.length ? '' : 'hidden'}><button class="primary" id="${after ? 'run-after' : 'run-audit'}" ${!drafts.length || (!after && state.before.length) ? 'disabled' : ''}>${after ? '重新檢測並比較' : '開始檢測'}${drafts.length ? `（${drafts.length} 頁）` : ''}</button><span class="muted">${!after && state.before.length ? '要換網站請先按右上角「開始新檢測」。' : '確認網址後即可檢測。'}</span></div></section>`;
@@ -121,10 +169,11 @@ function renderPageSpeedBox(audit) {
   const url = audit.page.url;
   const psi = state.pagespeed[url];
   const isPublic = !/\.test$/i.test(new URL(url).hostname) && location.protocol !== 'file:';
+  const scoreClass = v => (typeof v !== 'number' ? '' : v >= 90 ? 'good' : v >= 50 ? 'warn' : 'bad');
   const metricsHtml = psi
-    ? `<div class="psi-grid"><div class="psi-score ${psi.score >= 90 ? 'good' : psi.score >= 50 ? 'warn' : 'bad'}"><span>手機效能分數</span><strong>${psi.score ?? '—'}</strong></div><div class="psi-metric"><span>主畫面載入 (LCP)</span><b>${e(psi.metrics.lcp.display || '—')}</b><small>${e(psi.metrics.lcp.status)}</small></div><div class="psi-metric"><span>版面穩定度 (CLS)</span><b>${e(psi.metrics.cls.display || '—')}</b><small>${e(psi.metrics.cls.status)}</small></div><div class="psi-metric"><span>互動延遲 (TBT)</span><b>${e(psi.metrics.tbt.display || '—')}</b><small>${e(psi.metrics.tbt.status)}</small></div></div><p class="panel-subtitle" style="margin-top:10px">檢測時間：${e(new Date(psi.checkedAt).toLocaleString('zh-TW'))}。若 LCP 偏慢，通常先壓縮首圖為 WebP 並啟用 WordPress 快取外掛最有效。</p>`
-    : `<p class="panel-subtitle">${isPublic ? '透過 Google PageSpeed Insights 免費 API 取得真實手機載入速度與 Core Web Vitals（約需 10–20 秒）。' : '示範網址或離線檔案無法測真實速度；輸入公開網站網址即可使用。'}</p>`;
-  return `<section class="panel psi-panel"><div class="preview-head"><h2>手機載入速度（Google PageSpeed Insights）</h2><button id="run-pagespeed" data-psi-url="${e(url)}" class="quiet" ${isPublic ? '' : 'disabled'}>${psi ? '重新測手機速度' : '一鍵測手機速度'}</button></div>${metricsHtml}</section>`;
+    ? `<div class="psi-grid psi-grid-5"><div class="psi-score ${scoreClass(psi.score)}"><span>手機效能</span><strong>${psi.score ?? '—'}</strong></div><div class="psi-score ${scoreClass(psi.seoScore)}"><span>Lighthouse SEO</span><strong>${psi.seoScore ?? '—'}</strong></div><div class="psi-metric"><span>主畫面載入 (LCP)</span><b>${e(psi.metrics.lcp.display || '—')}</b><small>${e(psi.metrics.lcp.status)}</small></div><div class="psi-metric"><span>版面穩定度 (CLS)</span><b>${e(psi.metrics.cls.display || '—')}</b><small>${e(psi.metrics.cls.status)}</small></div><div class="psi-metric"><span>互動延遲 (TBT)</span><b>${e(psi.metrics.tbt.display || '—')}</b><small>${e(psi.metrics.tbt.status)}</small></div></div><p class="panel-subtitle" style="margin-top:10px">檢測時間：${e(new Date(psi.checkedAt).toLocaleString('zh-TW'))}。Google Lighthouse SEO 檢查基礎技術收錄；本工具額外補充內文可閱讀性、內外鏈與社群卡片建議。</p>`
+    : `<p class="panel-subtitle">${isPublic ? '透過 Google PageSpeed Insights 免費 API 取得真實手機效能、Lighthouse SEO 分數與 Core Web Vitals（約需 15–25 秒）。' : '示範網址或離線檔案無法測真實速度；輸入公開網站網址即可使用。'}</p>`;
+  return `<section class="panel psi-panel"><div class="preview-head"><h2>Google Lighthouse 手機速度與 SEO 分數</h2><button id="run-pagespeed" data-psi-url="${e(url)}" class="quiet" ${isPublic ? '' : 'disabled'}>${psi ? '重新檢測 Lighthouse' : '一鍵測手機速度與 SEO'}</button></div>${metricsHtml}</section>`;
 }
 
 function renderResults() {
@@ -284,8 +333,9 @@ async function runPageSpeedCheck(url) {
   const data = await res.json();
   if (!res.ok || data.error) throw new Error(data.error || '無法取得手機速度資料。');
   state.pagespeed[url] = data;
+  saveSession();
   render();
-  notify(`手機速度檢測完成：效能分數 ${data.score ?? '—'}（LCP ${data.metrics.lcp.display || '—'} · ${data.metrics.lcp.status}）。`);
+  notify(`Lighthouse 檢測完成：手機效能 ${data.score ?? '—'} · SEO ${data.seoScore ?? '—'}（LCP ${data.metrics.lcp.display || '—'}）。`);
 }
 
 function runAudit(target) {
@@ -300,6 +350,7 @@ function runAudit(target) {
     state.history.unshift({ at: new Date().toISOString(), pages: audits.length, fixed: comparison.filter(r => r.change === '已修正').length, regressed: comparison.filter(r => r.change === '回歸問題').length, unknown: comparison.filter(r => r.change === '待確認').length, audits });
     state.view = 'verify';
   }
+  saveSession();
   render(); window.scrollTo({ top: 0 });
   notify(target === 'before' ? `完成 ${audits.length} 頁分析！建議先從上方「優先處理」項目下手。` : '已完成前後比對！');
 }
@@ -322,7 +373,7 @@ document.addEventListener('click', async event => {
     if (button.id === 'run-pagespeed') { setBusy(true); await runPageSpeedCheck(button.dataset.psiUrl); return; }
     if (button.id === 'reset-session') { document.querySelector('#reset-dialog').showModal(); return; }
     if (button.id === 'cancel-reset') { document.querySelector('#reset-dialog').close(); return; }
-    if (button.id === 'confirm-reset') { state = emptyState(); document.querySelector('#reset-dialog').close(); document.querySelector('#notice').hidden = true; render(); return; }
+    if (button.id === 'confirm-reset') { state = emptyState(); clearSession(); document.querySelector('#reset-dialog').close(); document.querySelector('#notice').hidden = true; render(); return; }
     if (button.id === 'sample-before') {
       state.drafts.before = [{ url: sampleUrl, html: sampleBefore, name: 'product-before.html', sourceKind: '虛構練習範例', capturedAt: new Date().toISOString(), context: { product: true, multilingual: false }, extracted: extractWithReadability(sampleBefore) }]; runAudit('before'); return;
     }
@@ -337,7 +388,7 @@ document.addEventListener('click', async event => {
     if (button.id === 'fetch-page') { setBusy(true); await fetchPage(button.dataset.target); return; }
     if (button.dataset.removeDraft !== undefined) { state.drafts[button.dataset.target].splice(Number(button.dataset.removeDraft), 1); render(); return; }
     if (button.id === 'run-audit' || button.id === 'run-after') { setBusy(true); await new Promise(resolve => setTimeout(resolve, 0)); runAudit(button.id === 'run-audit' ? 'before' : 'after'); return; }
-    if (button.dataset.toggleTask) { const task = state.plan.find(t => t.findingKey === button.dataset.toggleTask); task.included = !task.included; render(); return; }
+    if (button.dataset.toggleTask) { const task = state.plan.find(t => t.findingKey === button.dataset.toggleTask); task.included = !task.included; saveSession(); render(); return; }
     if (button.dataset.copySingle) {
       const finding = state.before.flatMap(a => a.results).find(r => r.key === button.dataset.copySingle);
       if (!finding) return;
@@ -346,7 +397,7 @@ document.addEventListener('click', async event => {
       catch { go('prompt'); notify('瀏覽器未允許自動複製，已帶你到指令區手動複製。'); }
       return;
     }
-    if (button.dataset.move !== undefined) { const i = Number(button.dataset.move), j = i + Number(button.dataset.direction); if (j >= 0 && j < state.plan.length) [state.plan[i], state.plan[j]] = [state.plan[j], state.plan[i]]; render(); return; }
+    if (button.dataset.move !== undefined) { const i = Number(button.dataset.move), j = i + Number(button.dataset.direction); if (j >= 0 && j < state.plan.length) [state.plan[i], state.plan[j]] = [state.plan[j], state.plan[i]]; saveSession(); render(); return; }
     if (button.id === 'copy-prompt') {
       const value = currentPrompt();
       try { await navigator.clipboard.writeText(value); notify('完整指令已複製，直接貼到你的 AI 對話框即可！'); }
@@ -364,19 +415,37 @@ document.addEventListener('change', async event => {
   const input = event.target;
   try {
     if (input.id === 'files') { setBusy(true); await readFiles(input); return; }
+    if (input.id === 'session-file') {
+      const file = input.files?.[0];
+      if (!file) return;
+      if (file.size > 10 * 1024 * 1024) throw new Error('進度檔超過 10 MB 上限。');
+      const data = JSON.parse(await file.text());
+      restoreSessionData(data, '匯入的進度檔');
+      return;
+    }
     if (input.dataset.draftUrl !== undefined) { state.drafts[input.dataset.target][Number(input.dataset.draftUrl)].url = input.value; return; }
     if (input.dataset.draftContext) { state.drafts[input.dataset.target][Number(input.dataset.index)].context[input.dataset.draftContext] = input.checked; return; }
     if (input.id === 'result-filter') { state.filter = input.value; render(); return; }
-    if (input.dataset.planCheck !== undefined) { state.plan[Number(input.dataset.planCheck)].included = input.checked; render(); return; }
-    if (input.id === 'ai-tool') { state.tool = input.value; syncPrompt(); }
+    if (input.dataset.planCheck !== undefined) { state.plan[Number(input.dataset.planCheck)].included = input.checked; saveSession(); render(); return; }
+    if (input.id === 'ai-tool') { state.tool = input.value; saveSession(); syncPrompt(); }
   } catch (error) { notify(error.message || '檔案讀取失敗。', true); }
   finally { setBusy(false); }
 });
 document.addEventListener('input', event => {
   const input = event.target;
-  if (input.dataset.taskNote !== undefined) state.plan[Number(input.dataset.taskNote)].note = input.value;
-  if (input.id === 'scope') { state.scope = input.value; syncPrompt(); }
-  if (input.id === 'prompt-notes') { state.notes = input.value; syncPrompt(); }
+  if (input.dataset.taskNote !== undefined) { state.plan[Number(input.dataset.taskNote)].note = input.value; saveSession(); }
+  if (input.id === 'scope') { state.scope = input.value; saveSession(); syncPrompt(); }
+  if (input.id === 'prompt-notes') { state.notes = input.value; saveSession(); syncPrompt(); }
 });
-window.addEventListener('beforeunload', event => { if (state.before.length) { event.preventDefault(); event.returnValue = ''; } });
-render();
+try {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (saved) {
+    const data = JSON.parse(saved);
+    const when = data.savedAt ? `（${new Date(data.savedAt).toLocaleString('zh-TW')}）` : '';
+    restoreSessionData(data, `上次在本機自動保存的進度${when}`);
+  } else {
+    render();
+  }
+} catch {
+  render();
+}

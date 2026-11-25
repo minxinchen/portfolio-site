@@ -77,6 +77,7 @@ main:focus{outline:none}
 .site-panel h3{font-size:15px;margin-bottom:8px}
 .site-panel code{background:#f4eee7;padding:1px 6px;border-radius:5px;font-size:12px}
 .psi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:8px}
+.psi-grid.psi-grid-5{grid-template-columns:repeat(5,1fr)}
 .psi-score,.psi-metric{background:#faf6f0;border:1px solid var(--line);border-radius:12px;padding:12px 14px}
 .psi-score span,.psi-metric span{display:block;font-size:11px;color:var(--muted)}
 .psi-score strong{display:block;font-size:26px;line-height:1.25;margin-top:2px}

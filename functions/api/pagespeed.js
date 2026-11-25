@@ -6,7 +6,7 @@ function grade(value, good, poor) {
   return value <= good ? '良好' : value <= poor ? '需改善' : '偏慢';
 }
 
-export async function fetchPageSpeed(value, { fetcher = fetch, apiKey = '', timeoutMs = 25000 } = {}) {
+export async function fetchPageSpeed(value, { fetcher = fetch, apiKey = '', timeoutMs = 30000 } = {}) {
   const url = publicUrl(value);
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -15,7 +15,8 @@ export async function fetchPageSpeed(value, { fetcher = fetch, apiKey = '', time
     const endpoint = new URL('https://www.googleapis.com/pagespeedonline/v5/runPagespeed');
     endpoint.searchParams.set('url', url.href);
     endpoint.searchParams.set('strategy', 'mobile');
-    endpoint.searchParams.set('category', 'performance');
+    endpoint.searchParams.append('category', 'performance');
+    endpoint.searchParams.append('category', 'seo');
     if (apiKey) endpoint.searchParams.set('key', apiKey);
     const res = await fetcher(endpoint.href, { method: 'GET', signal: controller.signal, headers: { Accept: 'application/json' } });
     if (res.status === 429) throw new Error('Google PageSpeed 免費額度暫時達上限，請稍後再試，或直接點右側官方連結檢測。');
@@ -23,6 +24,7 @@ export async function fetchPageSpeed(value, { fetcher = fetch, apiKey = '', time
     const data = await res.json();
     const lh = data.lighthouseResult || {};
     const score = typeof lh.categories?.performance?.score === 'number' ? Math.round(lh.categories.performance.score * 100) : null;
+    const seoScore = typeof lh.categories?.seo?.score === 'number' ? Math.round(lh.categories.seo.score * 100) : null;
     const audits = lh.audits || {};
     const lcpMs = audits['largest-contentful-paint']?.numericValue ?? null;
     const cls = audits['cumulative-layout-shift']?.numericValue ?? null;
@@ -32,6 +34,7 @@ export async function fetchPageSpeed(value, { fetcher = fetch, apiKey = '', time
       url: url.href,
       strategy: 'mobile',
       score,
+      seoScore,
       metrics: {
         lcp: { ms: lcpMs, display: audits['largest-contentful-paint']?.displayValue || '', status: grade(lcpMs, 2500, 4000) },
         cls: { value: cls, display: audits['cumulative-layout-shift']?.displayValue || '', status: grade(cls, 0.1, 0.25) },
@@ -41,7 +44,7 @@ export async function fetchPageSpeed(value, { fetcher = fetch, apiKey = '', time
       checkedAt: new Date().toISOString(),
     };
   } catch (error) {
-    if (controller.signal.aborted) throw new Error('PageSpeed 檢測超過 25 秒逾時，請稍後重試。');
+    if (controller.signal.aborted) throw new Error('PageSpeed 檢測超過 30 秒逾時，請稍後重試。');
     throw error;
   } finally {
     clearTimeout(timer);

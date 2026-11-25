@@ -45,7 +45,7 @@ test('discoverSitemapUrls follows robots.txt sitemapindex and filters off-origin
 test('fetchPageSpeed parses mobile metrics and handles 429 quota cleanly', async () => {
   const okFetcher = mocked(() => new Response(JSON.stringify({
     lighthouseResult: {
-      categories: { performance: { score: 0.86 } },
+      categories: { performance: { score: 0.86 }, seo: { score: 0.92 } },
       audits: {
         'largest-contentful-paint': { numericValue: 2100, displayValue: '2.1 s' },
         'cumulative-layout-shift': { numericValue: 0.04, displayValue: '0.04' },
@@ -56,6 +56,7 @@ test('fetchPageSpeed parses mobile metrics and handles 429 quota cleanly', async
   }), { headers: { 'Content-Type': 'application/json' } }));
   const psi = await fetchPageSpeed('https://example.com/', { fetcher: okFetcher });
   assert.equal(psi.score, 86);
+  assert.equal(psi.seoScore, 92);
   assert.equal(psi.metrics.lcp.status, '良好');
   assert.equal(psi.metrics.cls.status, '良好');
 
