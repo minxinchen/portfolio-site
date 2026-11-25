@@ -316,16 +316,23 @@ function findMainScope(all) {
   return list;
 }
 
-function detectWordPressStack(html) {
-  const seoPlugins = [];
-  const builders = [];
-  if (/yoast\s+seo|yoast-schema-graph/i.test(html)) seoPlugins.push('Yoast SEO');
-  if (/rank\s*math|rank-math-schema/i.test(html)) seoPlugins.push('Rank Math');
-  if (/all\s+in\s+one\s+seo|aioseo-schema/i.test(html)) seoPlugins.push('All in One SEO');
-  if (/seopress/i.test(html)) seoPlugins.push('SEOPress');
-  if (/wp-content\/plugins\/elementor|elementor-widget/i.test(html)) builders.push('Elementor');
-  if (/wp-content\/plugins\/woocommerce|woocommerce-page/i.test(html)) builders.push('WooCommerce');
-  const isWordPress = seoPlugins.length > 0 || builders.length > 0 || /wp-content\/|wp-includes\/|<meta[^>]+name=["']generator["'][^>]+WordPress/i.test(html);
+// Only machine-generated signals count: HTML comments emitted by plugins, plugin asset paths and
+// plugin-specific class names. Visible article text (e.g. a Yoast vs Rank Math tutorial) never does.
+function detectWordPressStack(all) {
+  const signals = [];
+  for (const n of all) {
+    if (n.nodeName === '#comment') signals.push(n.data || '');
+    else if (n.attrs) for (const a of n.attrs) if (['href', 'src', 'class', 'id', 'content'].includes(a.name)) signals.push(a.value);
+  }
+  const blob = signals.join('\n');
+  const seoPlugins = [], builders = [];
+  if (/optimized with the yoast seo|plugins\/wordpress-seo\/|yoast-schema-graph/i.test(blob)) seoPlugins.push('Yoast SEO');
+  if (/search engine optimization by rank math|plugins\/seo-by-rank-math\/|rank-math-schema/i.test(blob)) seoPlugins.push('Rank Math');
+  if (/all in one seo|plugins\/all-in-one-seo-pack\/|aioseo-schema/i.test(blob)) seoPlugins.push('All in One SEO');
+  if (/optimized with the seopress|plugins\/wp-seopress\//i.test(blob)) seoPlugins.push('SEOPress');
+  if (/plugins\/elementor\/|elementor-widget/i.test(blob)) builders.push('Elementor');
+  if (/plugins\/woocommerce\/|woocommerce-page/i.test(blob)) builders.push('WooCommerce');
+  const isWordPress = seoPlugins.length > 0 || builders.length > 0 || /wp-content\/|wp-includes\/|wp-json/i.test(blob) || all.some(n => n.tagName === 'meta' && attr(n, 'name').toLowerCase() === 'generator' && /wordpress/i.test(attr(n, 'content')));
   return { isWordPress, seoPlugins, builders };
 }
 
@@ -341,7 +348,12 @@ export function auditPage(input) {
   const head = all.find(n => n.tagName === 'head');
   const headNodes = head ? walk(head) : [];
   const mainNodes = findMainScope(all);
-  const wpStack = detectWordPressStack(page.html);
+  const wpStack = detectWordPressStack(all);
+  const bodyEl = all.find(n => n.tagName === 'body');
+  const pagePath = new URL(page.url).pathname;
+  const articleCount = all.filter(n => n.tagName === 'article').length;
+  const isListing = pagePath === '/' || articleCount >= 3 || /(?:^|\s)(?:home|blog|archive|category|tag|search)(?:\s|$)/i.test(attr(bodyEl, 'class'));
+  const pageType = isListing ? 'listing' : 'content';
   const tags = (name, scope = all) => scope.filter(n => n.tagName === name);
   const metas = name => tags('meta', headNodes).filter(n => attr(n, 'name').toLowerCase() === name);
   const propMetas = prop => tags('meta', headNodes).filter(n => attr(n, 'property').toLowerCase() === prop);
@@ -439,13 +451,13 @@ export function auditPage(input) {
   }
 
   // 5. WordPress Plugin Conflict check
-  const wpStatus = wpStack.seoPlugins.length > 1 ? 'FAIL' : wpStack.isWordPress ? 'PASS' : 'NOT_APPLICABLE';
+  const wpStatus = wpStack.seoPlugins.length > 1 ? 'FAIL' : wpStack.seoPlugins.length === 1 ? 'PASS' : wpStack.isWordPress ? 'UNKNOWN' : 'NOT_APPLICABLE';
   const wpDetail = wpStack.seoPlugins.length > 1
     ? `偵測到同時啟用多個 SEO 外掛（${wpStack.seoPlugins.join(' + ')}），這容易造成重複輸出 Canonical、Title 與 Schema 衝突，請只保留一套！`
     : wpStack.seoPlugins.length === 1
     ? `偵測到 WordPress 搭配 ${wpStack.seoPlugins[0]}${wpStack.builders.length ? `（${wpStack.builders.join('、')}）` : ''}，無多重 SEO 外掛衝突。`
     : wpStack.isWordPress
-    ? `偵測到 WordPress 網站${wpStack.builders.length ? `（${wpStack.builders.join('、')}）` : ''}，未偵測到常見 SEO 外掛（如 Yoast 或 Rank Math），建議安裝一套協助管理標題與 Schema。`
+    ? `偵測到 WordPress 網站${wpStack.builders.length ? `（${wpStack.builders.join('、')}）` : ''}，未從頁面原始碼找到常見 SEO 外掛（Yoast、Rank Math 等）的輸出痕跡。可能是主題內建、外掛未輸出註解，或尚未安裝；請到後台「外掛」頁確認，避免之後同時裝兩套。`
     : '未偵測到 WordPress 特徵（本項僅針對 WordPress 外掛衝突檢查）。';
   add('wp-stack', wpStatus, wpDetail);
 
@@ -472,7 +484,10 @@ export function auditPage(input) {
   add('h1', h1Status, h1Detail, h1);
 
   // 8. Heading outline & hierarchy (H1-H6)
-  const headingNodes = all.filter(n => /^h[1-6]$/.test(n.tagName || ''));
+  // Outline counts the H1 anywhere plus headings inside the main content only, so footer/sidebar
+  // widget titles (often H2–H4) cannot cause fake "skipped level" warnings.
+  const mainSet = new Set(mainNodes);
+  const headingNodes = all.filter(n => /^h[1-6]$/.test(n.tagName || '') && (n.tagName === 'h1' || mainSet.has(n)));
   const outline = headingNodes.map(n => ({ level: Number(n.tagName[1]), text: readableText(n) || '（空白標題）' }));
   const skipped = [];
   for (let i = 1; i < outline.length; i++) {
@@ -507,8 +522,8 @@ export function auditPage(input) {
   });
   const listCount = tags('ul', mainNodes).length + tags('ol', mainNodes).length;
   const tableCount = tags('table', mainNodes).length;
-  const isThin = mainWordCount < 80;
-  const lacksScannability = mainWordCount >= 500 && listCount === 0 && tableCount === 0 && h2Count === 0;
+  const isThin = !isListing && mainWordCount < 80;
+  const lacksScannability = !isListing && mainWordCount >= 500 && listCount === 0 && tableCount === 0 && h2Count === 0;
   const readStatus = (longParagraphs.length || isThin || lacksScannability) ? 'WARNING' : 'PASS';
   const readDetail = longParagraphs.length
     ? `發現 ${longParagraphs.length} 個超長段落（文字牆），最長一段開頭是「${longParagraphs[0].text.slice(0, 30)}…」（約 ${countWordsOrCjk(longParagraphs[0].text)} 字），建議拆成 2–3 段。`
@@ -516,6 +531,8 @@ export function auditPage(input) {
     ? `抓到的正文偏少（約 ${mainWordCount} 字）。若這不是純著陸頁，可能內容太薄，或正文靠 JavaScript 載入導致搜尋引擎看不到。`
     : lacksScannability
     ? `正文約 ${mainWordCount} 字，但沒有小標、條列清單或表格，整片純文字較難掃讀。`
+    : isListing && mainWordCount < 80
+    ? `這看起來是首頁或文章列表頁${articleCount ? `（偵測到 ${articleCount} 篇文章區塊）` : ''}，不要求長篇正文；請確認每篇文章本身的頁面內容充實。`
     : `正文約 ${mainWordCount} 字${usedReadability ? '（已透過 Mozilla Readability 過濾側邊欄雜訊）' : ''}，段落長度適中${listCount || tableCount ? `，包含 ${listCount} 個清單、${tableCount} 個表格方便掃讀` : ''}。`;
   add('readability', readStatus, readDetail, longParagraphs.length ? longParagraphs.map(p => p.node) : paragraphs.slice(0, 1).map(p => p.node));
 
@@ -594,7 +611,7 @@ export function auditPage(input) {
   const schemaHasAuthor = parsedSchemas.some(o => hasJsonLdKey(o, ['author', 'publisher', 'brand']));
   const hasDate = timeNodes.length > 0 || dateMetas.length > 0 || schemaHasDate || Boolean(page.extracted?.publishedTime);
   const hasAuthor = authorNodes.length > 0 || schemaHasAuthor || Boolean(page.extracted?.byline);
-  const eeatStatus = (hasDate || hasAuthor) ? 'PASS' : 'WARNING';
+  const eeatStatus = (hasDate || hasAuthor) ? 'PASS' : isListing ? 'NOT_APPLICABLE' : 'WARNING';
   const eeatDetail = hasDate && hasAuthor ? '已偵測到日期與作者／品牌標記，有助於建立內容可信度。'
     : hasDate ? '已偵測到日期標記；若為文章或專業解說頁，可再補充作者或品牌背書。'
     : hasAuthor ? '已偵測到作者／品牌標記；建議加上最後更新日期讓讀者知道內容是否最新。'
@@ -672,6 +689,7 @@ export function auditPage(input) {
     url: page.url,
     og: { title: ogTitle || titleText, description: ogDesc || descText, image: ogImageValid || '', hasExplicitOg: Boolean(ogTitle || ogDesc || ogImageValid) },
     wpStack,
+    pageType,
     outline: outline.slice(0, 30),
     stats: { words: mainWordCount, usedReadability, paragraphs: paragraphs.length, longParagraphs: longParagraphs.length, internalLinks: internalCount, externalLinks: externalCount, images: images.length, schemaTypes },
   };

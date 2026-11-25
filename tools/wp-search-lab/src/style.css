@@ -68,4 +68,6 @@ body{background:#fcfaf6}.portfolio-header{height:82px;position:sticky;top:0;z-in
 .social-title{font-size:15px;font-weight:700;color:var(--ink);margin:4px 0}
 .social-desc{font-size:12px;color:#544c46;line-height:1.5}
 .wp-badge{background:#eadacb!important;color:#70402e!important;font-weight:600}
+main:focus{outline:none}
+.filterbar select{min-width:240px;max-width:100%;background-position:right 12px center}
 @media(max-width:700px){.dim-grid{grid-template-columns:1fr}}
