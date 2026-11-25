@@ -14,8 +14,8 @@ test('reject nonpublic DNS answers',async()=>{
  await assert.rejects(retrievePage('https://example.com',async()=>dns('10.0.0.1')),/公開網路/);
 });
 test('fetch full raw HTML without forwarding credentials',async()=>{
- const page=await retrievePage('https://example.com',mocked((url,options)=>{assert.equal(options.redirect,'manual');assert.equal(options.credentials,'omit');assert.equal(options.headers.Cookie,undefined);return html();}));
- assert.match(page.html,/<title>測試/);assert.equal(page.url,'https://example.com/');assert.equal(page.status,200);assert.ok(page.capturedAt);
+ const page=await retrievePage('https://example.com',mocked((url,options)=>{assert.equal(options.redirect,'manual');assert.equal(options.credentials,'omit');assert.equal(options.headers.Cookie,undefined);if(String(url).endsWith('/robots.txt'))return new Response('User-agent: *\nAllow: /\nSitemap: https://example.com/sitemap.xml',{headers:{'Content-Type':'text/plain'}});return new Response('<html><title>測試</title><h1>內容</h1></html>',{headers:{'Content-Type':'text/html; charset=utf-8','X-Robots-Tag':'index, follow'}});}));
+ assert.match(page.html,/<title>測試/);assert.equal(page.url,'https://example.com/');assert.equal(page.status,200);assert.equal(page.xRobotsTag,'index, follow');assert.match(page.robotsTxt,/Sitemap:/);assert.ok(page.capturedAt);
 });
 test('validate each redirect and final URL',async()=>{
  let n=0;const page=await retrievePage('https://example.com',mocked(()=>++n===1?new Response('',{status:302,headers:{Location:'/new'}}):html()));assert.equal(page.url,'https://example.com/new');

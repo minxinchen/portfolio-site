@@ -19,3 +19,6 @@ Static portfolio with WP Search Lab, deployed through GitHub → Cloudflare Page
 - [Cloudflare Browser Run](https://github.com/cloudflare/browser-run), Apache-2.0: reviewed as a rendered-DOM alternative; not installed or enabled.
 - [Jina Reader](https://github.com/jina-ai/reader), Apache-2.0: reviewed as an external retrieval service; not called by this application.
 - Existing parse5 HTML analysis is retained; runtime license texts are embedded in the application and preserved under `tools/wp-search-lab/licenses/`.
+- [samclarke/robots-parser](https://github.com/samclarke/robots-parser), MIT: zero-dependency `robots.txt` and Sitemap directive parser used in online URL audits.
+- [mozilla/readability](https://github.com/mozilla/readability) (`@mozilla/readability`), Apache-2.0: browser-side main-content extraction (Firefox Reader View algorithm) for WordPress readability analysis.
+- [GoogleChrome/lighthouse](https://github.com/GoogleChrome/lighthouse), Apache-2.0 (`core/audits/seo/`) and [Google Search Central](https://developers.google.com/search/docs): SEO, crawlability, and AI features guideline references.

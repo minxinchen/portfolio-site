@@ -92,7 +92,25 @@ export async function retrievePage(value, fetcher = fetch, timeoutMs = TIMEOUT) 
       try { html = new TextDecoder(charset).decode(bytes); } catch { throw new Error('這個網頁的文字編碼目前不支援。'); }
       if (!html.trim()) throw new Error('網站回傳空白頁面。');
       if (/cf-chl-|challenge-platform|<title>\s*(Just a moment|Attention Required)/i.test(html)) throw new Error('網站要求瀏覽器驗證，無法取得實際頁面；本次沒有產生檢測結果。');
-      return { requestedUrl, url: url.href, html, bytes: bytes.length, status: response.status, capturedAt: new Date().toISOString(), sourceKind: '線上網頁讀取' };
+      const xRobotsTag = response.headers.get('x-robots-tag') || '';
+      const robotsUrl = new URL('/robots.txt', url.origin).href;
+      let robotsTxt = null;
+      try {
+        const robotsRes = await fetcher(robotsUrl, {
+          method: 'GET', redirect: 'manual', signal: controller.signal, credentials: 'omit', cache: 'no-store',
+          headers: { Accept: 'text/plain,*/*;q=0.1', 'User-Agent': 'WP-Search-Lab/0.3 (+https://portfolio-site-1b8.pages.dev/projects/wp-search-lab.html)' },
+        });
+        const rMime = robotsRes.headers.get('content-type') || '';
+        if (robotsRes.ok && !/text\/html/i.test(rMime)) {
+          const rBytes = await limitedBytes(robotsRes, 64 * 1024);
+          robotsTxt = new TextDecoder('utf-8').decode(rBytes);
+        } else {
+          await robotsRes.body?.cancel();
+        }
+      } catch {
+        robotsTxt = null;
+      }
+      return { requestedUrl, url: url.href, html, bytes: bytes.length, status: response.status, xRobotsTag, robotsTxt, robotsUrl, capturedAt: new Date().toISOString(), sourceKind: '線上網頁讀取' };
     }
   } catch (error) {
     if (controller.signal.aborted) throw new Error('網站讀取超過 15 秒，請稍後重試。');

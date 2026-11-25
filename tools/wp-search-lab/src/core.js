@@ -1,6 +1,7 @@
 import { parse } from 'parse5';
+import robotsParser from 'robots-parser';
 
-export const RULE_VERSION = '2026-11-25.1';
+export const RULE_VERSION = '2026-11-25.2';
 export const LIMITS = Object.freeze({ pages: 20, pageBytes: 2 * 1024 * 1024, totalBytes: 20 * 1024 * 1024 });
 export const STATUS_LABELS = Object.freeze({ PASS: '符合建議', FAIL: '需要修正', WARNING: '建議優化', UNKNOWN: '需外部確認', NOT_APPLICABLE: '不適用' });
 export const CATEGORY_LABELS = Object.freeze({
@@ -20,12 +21,14 @@ const sources = {
   canonical: google + 'crawling-indexing/consolidate-duplicate-urls',
   hreflang: google + 'specialty/international/localized-versions',
   robots: google + 'crawling-indexing/robots-meta-tag',
+  robotsTxt: google + 'crawling-indexing/robots/intro',
   images: google + 'appearance/google-images',
   structured: google + 'appearance/structured-data/intro-structured-data',
   ai: google + 'appearance/ai-features',
   mobile: google + 'crawling-indexing/mobile/mobile-sites-mobile-first-indexing',
   links: google + 'crawling-indexing/links-crawlable',
   helpful: google + 'fundamentals/creating-helpful-content',
+  og: 'https://ogp.me/',
 };
 
 const edit = '進入 WordPress「頁面／文章 → 編輯」。若使用 WooCommerce 則到「商品 → 編輯」。';
@@ -59,12 +62,39 @@ export const RULES = [
   {
     id: 'robots-meta', category: 'seo', name: '搜尋與 AI 摘要收錄權限', severity: '高', source: sources.ai, standard: 'Google 官方技術規範',
     advice: advice(
-      'Google 的 AI Overviews 與搜尋結果都要求頁面「可被索引」且「允許顯示摘要」。若誤設 noindex 或 nosnippet，頁面會從搜尋或 AI 摘要消失。',
+      'Google 的 AI Overviews 與搜尋結果都要求頁面「可被索引」且「允許顯示摘要」。若誤設 noindex、nosnippet 或主機回傳 X-Robots-Tag: noindex，頁面會從搜尋或 AI 摘要消失。',
       '檢查 SEO 外掛該頁的「進階 → 允許搜尋引擎顯示此頁」，以及 WordPress「設定 → 閱讀 → 阻擋搜尋引擎索引這個網站」是否誤勾。',
-      ['確認這頁是否要公開讓大家搜尋到（測試站或私密頁除外）。', '若應公開，移除 noindex、nosnippet、max-snippet:0 或 data-nosnippet 設定。', '儲存後重新檢測本頁。'],
-      'HTML 內沒有阻擋收錄或阻擋顯示摘要的標記。',
+      ['確認這頁是否要公開讓大家搜尋到（測試站或私密頁除外）。', '若應公開，移除 noindex、nosnippet、max-snippet:0 或主機 X-Robots-Tag 限制。', '儲存後重新檢測本頁。'],
+      'HTML 與 HTTP 標頭皆未阻擋搜尋收錄或摘要顯示。',
       '僅適用於希望公開曝光的頁面；草稿、會員頁或測試站請勿隨意解除。',
       '解除測試站或內部頁面的 noindex 可能導致不該公開的內容被搜尋到。'
+    ),
+  },
+  {
+    id: 'robots-txt', category: 'seo', name: 'robots.txt 爬蟲與 Sitemap 規則', severity: '高', source: sources.robotsTxt, standard: 'Google Lighthouse SEO 規則',
+    advice: advice(
+      '如果網站根目錄的 robots.txt 寫了 Disallow 擋住這個網址，Googlebot 根本連抓都不會抓；同時也可確認是否宣告 Sitemap 或阻擋 AI 爬蟲。',
+      '在 Yoast SEO「工具 → 檔案編輯器」或 Rank Math「一般設定 → 編輯 robots.txt」檢查與修改。',
+      ['確認 Googlebot 沒有被 Disallow 擋住本頁路徑。', '確認 robots.txt 內有加上 Sitemap: https://你的網域/sitemap_index.xml。', '若希望出現在 AI 搜尋引用，確認未誤擋相關搜尋爬蟲。'],
+      'robots.txt 允許 Googlebot 抓取本頁，且有宣告 Sitemap。'
+    ),
+  },
+  {
+    id: 'wp-stack', category: 'seo', name: 'WordPress 外掛衝突檢查', severity: '高', source: sources.canonical, standard: 'WordPress 維運建議',
+    advice: advice(
+      '同時啟用兩套 SEO 外掛（例如 Yoast SEO + Rank Math 並存）是最常見的 WordPress 地雷，會重複輸出 Canonical、Title 與 Schema 造成 Google 混亂。',
+      '進入 WordPress「外掛 → 已安裝的外掛」，只保留一套主力 SEO 外掛並停用其餘重複外掛。',
+      ['確認目前主力使用哪一套 SEO 外掛（Yoast、Rank Math 或 AIOSEO 擇一）。', '先匯出設定備份，再停用重複的 SEO 外掛。', '清除快取後重新檢測本頁。'],
+      '頁面未同時出現兩套以上互相衝突的 SEO 外掛輸出。'
+    ),
+  },
+  {
+    id: 'open-graph', category: 'seo', name: 'LINE／FB 社群分享卡片（Open Graph）', severity: '中', source: sources.og, standard: 'Open Graph 社群標準',
+    advice: advice(
+      '把網址貼到 LINE、Facebook 或 LinkedIn 時，平台會讀取 og:title、og:description 與 og:image 來畫縮圖卡片；缺少設定常會出現破圖或只剩純網址。',
+      edit + '在 SEO 外掛的「社群（Social）」分頁上傳分享縮圖（建議 1200×630 px）並填寫分享標題與簡介。',
+      ['設定 og:title 與 og:description（若沒特別需求可與 SEO 標題一致）。', '在「精選圖片」或 SEO 外掛社群分頁設定一張清晰的 og:image（須為完整 https:// 網址）。', '更新後可到上方預覽區切換「LINE／FB 分享預覽」確認效果。'],
+      '具備有效的 og:title、og:description 與 https:// 開頭的 og:image。'
     ),
   },
   {
@@ -191,11 +221,11 @@ export const RULES = [
   },
   {
     id: 'http', category: 'boundary', name: 'HTTP 狀態與主機標頭', severity: '資訊', source: sources.robots, standard: '需外部工具確認',
-    advice: advice('單純解析 HTML 無法確認主機回傳的 X-Robots-Tag 或完整轉址鏈。', 'Google Search Console「網址審查」。', ['到 Google Search Console 輸入本網址，確認實際抓取狀態與是否已建立索引。'], '由 Search Console 確認實際抓取結果。'),
+    advice: advice('離線 HTML 檔案無法確認主機回傳的 HTTP 狀態或完整轉址鏈。', 'Google Search Console「網址審查」。', ['到 Google Search Console 輸入本網址，確認實際抓取狀態與是否已建立索引。'], '由 Search Console 確認實際抓取結果。'),
   },
   {
-    id: 'site-resources', category: 'boundary', name: 'Sitemap 與 robots.txt', severity: '資訊', source: google + 'crawling-indexing/sitemaps/overview', standard: '需外部工具確認',
-    advice: advice('單頁檢查無法代表全站 Sitemap 是否正常提交或 robots.txt 是否誤擋目錄。', 'Google Search Console「Sitemap」頁面與 SEO 外掛設定。', ['在 Search Console 確認 Sitemap 狀態為「成功」。'], '由 Search Console 確認全站收錄與 Sitemap 狀態。'),
+    id: 'site-resources', category: 'boundary', name: 'Sitemap 與全站失效連結', severity: '資訊', source: google + 'crawling-indexing/sitemaps/overview', standard: '需外部工具確認',
+    advice: advice('單頁檢查無法代表全站 Sitemap 內所有網址皆可正常存取。', 'Google Search Console「Sitemap」頁面。', ['在 Search Console 確認 Sitemap 狀態為「成功」。'], '由 Search Console 確認全站收錄與 Sitemap 狀態。'),
   },
   {
     id: 'semantic', category: 'boundary', name: '真實排名、動態內容與事實查核', severity: '資訊', source: sources.ai, standard: '需人工確認',
@@ -211,10 +241,10 @@ export function normalizeUrl(value) {
   u.hash = '';
   return u.href;
 }
-export function createSnapshot({ url, html, sourceKind = '匯入網頁', name = '', context = {}, capturedAt = new Date().toISOString() }) {
+export function createSnapshot({ url, html, sourceKind = '匯入網頁', name = '', context = {}, capturedAt = new Date().toISOString(), httpMeta = null, extracted = null }) {
   if (typeof html !== 'string' || !html.trim()) throw new Error('網頁內容是空的，請選擇 HTML 檔案或貼上網頁原始碼。');
   if (new TextEncoder().encode(html).byteLength > LIMITS.pageBytes) throw new Error('單頁上限為 2 MB，請移除不需要的內嵌大型資料後重試。');
-  return { url: normalizeUrl(url), html, sourceKind, name, capturedAt, context: { product: Boolean(context.product), multilingual: Boolean(context.multilingual) } };
+  return { url: normalizeUrl(url), html, sourceKind, name, capturedAt, context: { product: Boolean(context.product), multilingual: Boolean(context.multilingual) }, httpMeta, extracted };
 }
 function walk(root) {
   const list = [], stack = [root];
@@ -286,6 +316,19 @@ function findMainScope(all) {
   return list;
 }
 
+function detectWordPressStack(html) {
+  const seoPlugins = [];
+  const builders = [];
+  if (/yoast\s+seo|yoast-schema-graph/i.test(html)) seoPlugins.push('Yoast SEO');
+  if (/rank\s*math|rank-math-schema/i.test(html)) seoPlugins.push('Rank Math');
+  if (/all\s+in\s+one\s+seo|aioseo-schema/i.test(html)) seoPlugins.push('All in One SEO');
+  if (/seopress/i.test(html)) seoPlugins.push('SEOPress');
+  if (/wp-content\/plugins\/elementor|elementor-widget/i.test(html)) builders.push('Elementor');
+  if (/wp-content\/plugins\/woocommerce|woocommerce-page/i.test(html)) builders.push('WooCommerce');
+  const isWordPress = seoPlugins.length > 0 || builders.length > 0 || /wp-content\/|wp-includes\/|<meta[^>]+name=["']generator["'][^>]+WordPress/i.test(html);
+  return { isWordPress, seoPlugins, builders };
+}
+
 const GENERIC_ANCHOR = /^(?:點這裡|點此|這裡|按此|點擊這裡|點擊查看|了解更多|查看更多|閱讀更多|看更多|詳細內容|查看詳情|詳情|更多|連結|網址|click\s*here|read\s*more|learn\s*more|see\s*more|view\s*more|more|here|link|this\s*page|https?:\/\/\S+)$/i;
 const GENERIC_TITLE = /^(?:首頁|主頁|未命名|新文章|無標題|home|homepage|untitled|index|welcome)$/i;
 const FILENAME_ALT = /(?:^(?:img|dsc|dscn|pxl|screenshot|screen\s*shot|image|photo|pic|banner|slide|whatsapp\s*image)[_\-\s]?\d*|\.(?:jpe?g|png|gif|webp|svg|bmp|heic)$)/i;
@@ -298,6 +341,7 @@ export function auditPage(input) {
   const head = all.find(n => n.tagName === 'head');
   const headNodes = head ? walk(head) : [];
   const mainNodes = findMainScope(all);
+  const wpStack = detectWordPressStack(page.html);
   const tags = (name, scope = all) => scope.filter(n => n.tagName === name);
   const metas = name => tags('meta', headNodes).filter(n => attr(n, 'name').toLowerCase() === name);
   const propMetas = prop => tags('meta', headNodes).filter(n => attr(n, 'property').toLowerCase() === prop);
@@ -306,11 +350,21 @@ export function auditPage(input) {
   const links = rel => tags('link', headNodes).filter(n => tokens(attr(n, 'rel')).includes(rel));
   const results = [];
 
+  function personalizeWhere(where) {
+    if (wpStack.seoPlugins.length === 1) {
+      const p = wpStack.seoPlugins[0];
+      if (p === 'Rank Math') return where.replace(/在 Yoast SEO[^。]+Rank Math 的/, '偵測到你使用 Rank Math：在 Rank Math 的');
+      if (p === 'Yoast SEO') return where.replace(/或 Rank Math 的[^。]+/, '');
+    }
+    return where;
+  }
+
   function add(id, status, detail, nodes = [], extra = {}) {
     const rule = byId.get(id), n = nodes.find(x => x?.sourceCodeLocation), loc = n?.sourceCodeLocation;
-    const excerpt = loc ? page.html.slice(loc.startOffset, Math.min(loc.endOffset, loc.startOffset + 1600)) : detail;
+    const excerpt = extra.customExcerpt ?? (loc ? page.html.slice(loc.startOffset, Math.min(loc.endOffset, loc.startOffset + 1600)) : detail);
+    const ruleAdvice = { ...rule.advice, where: personalizeWhere(rule.advice.where) };
     results.push({
-      ...rule, ruleId: id, key: page.url + '|' + id, status, detail, ...extra,
+      ...rule, advice: ruleAdvice, ruleId: id, key: page.url + '|' + id, status, detail,
       evidence: { excerpt, line: loc?.startLine ?? null, method: 'parse5 8.1.1 靜態 HTML 分析 · 規則 ' + RULE_VERSION, matchedCount: nodes.length },
       pageUrl: page.url,
     });
@@ -348,30 +402,76 @@ export function auditPage(input) {
     : `摘要長度適中（${descText.length} 字）：${descText}`;
   add('description', descStatus, descDetail, descriptions);
 
-  // 3. Robots & AI Snippet eligibility
+  // 3. Robots & AI Snippet eligibility (+ HTTP X-Robots-Tag)
   const robots = tags('meta', headNodes).filter(n => ['robots', 'googlebot', 'googlebot-news'].includes(attr(n, 'name').toLowerCase()));
   const blockingIndex = robots.filter(n => tokens(attr(n, 'content')).some(t => t === 'noindex' || t === 'none'));
   const blockingSnippet = robots.filter(n => tokens(attr(n, 'content')).some(t => t === 'nosnippet' || /^max-snippet\s*:\s*0$/i.test(t)));
+  const xRobotsTag = String(page.httpMeta?.xRobotsTag || '').trim();
+  const headerBlocksIndex = /\b(noindex|none)\b/i.test(xRobotsTag);
+  const headerBlocksSnippet = /\b(nosnippet|max-snippet\s*:\s*0)\b/i.test(xRobotsTag);
   const dataNosnippet = all.filter(n => n.attrs?.some(a => a.name.toLowerCase() === 'data-nosnippet'));
   const robotsIssues = [...blockingIndex, ...blockingSnippet];
-  const robotsStatus = robotsIssues.length ? 'WARNING' : 'PASS';
-  const robotsDetail = blockingIndex.length ? '偵測到 noindex／none，Google 不會將這頁收錄進搜尋結果與 AI Overview。若這頁應該公開，請解除。'
+  const robotsStatus = (robotsIssues.length || headerBlocksIndex || headerBlocksSnippet) ? 'WARNING' : 'PASS';
+  const robotsDetail = headerBlocksIndex ? `主機 HTTP 標頭回傳 X-Robots-Tag: ${xRobotsTag}，會阻擋 Google 收錄此頁。`
+    : headerBlocksSnippet ? `主機 HTTP 標頭回傳 X-Robots-Tag: ${xRobotsTag}，會阻擋 Google 顯示摘要與 AI Overview。`
+    : blockingIndex.length ? '偵測到 noindex／none，Google 不會將這頁收錄進搜尋結果與 AI Overview。若這頁應該公開，請解除。'
     : blockingSnippet.length ? '偵測到 nosnippet／max-snippet:0，這會阻擋 Google 搜尋摘要與 AI Overview 引用本頁文字。'
     : dataNosnippet.length ? `頁面允許搜尋收錄；另有 ${dataNosnippet.length} 處使用 data-nosnippet 局部隱藏摘要。`
-    : '沒有發現阻擋搜尋收錄（noindex）或阻擋 AI 摘要（nosnippet）的設定。';
-  add('robots-meta', robotsStatus, robotsDetail, robotsIssues.length ? robotsIssues : robots);
+    : `沒有發現阻擋搜尋收錄或 AI 摘要的設定${page.httpMeta ? '（已同時檢查 HTML 與 HTTP X-Robots-Tag）' : ''}。`;
+  add('robots-meta', robotsStatus, robotsDetail, robotsIssues.length ? robotsIssues : robots, xRobotsTag ? { customExcerpt: `HTTP X-Robots-Tag: ${xRobotsTag}` } : {});
 
-  // 4. H1
+  // 4. robots.txt (via samclarke/robots-parser when online fetch retrieved robotsTxt)
+  if (typeof page.httpMeta?.robotsTxt === 'string') {
+    const robotsUrl = page.httpMeta.robotsUrl || new URL('/robots.txt', page.url).href;
+    const rp = robotsParser(robotsUrl, page.httpMeta.robotsTxt);
+    const googleAllowed = rp.isAllowed(page.url, 'Googlebot') !== false;
+    const googleExtendedAllowed = rp.isAllowed(page.url, 'Google-Extended') !== false;
+    const oaiSearchAllowed = rp.isAllowed(page.url, 'OAI-SearchBot') !== false;
+    const sitemaps = rp.getSitemaps();
+    const blockedAi = [!googleExtendedAllowed ? 'Google-Extended' : '', !oaiSearchAllowed ? 'OAI-SearchBot' : ''].filter(Boolean);
+    const rStatus = !googleAllowed ? 'FAIL' : (!sitemaps.length || blockedAi.length) ? 'WARNING' : 'PASS';
+    const rDetail = !googleAllowed
+      ? `網站的 robots.txt 阻擋了 Googlebot 抓取這頁（${page.url}），Google 將無法收錄！`
+      : `robots.txt 允許 Googlebot 抓取本頁；${sitemaps.length ? `已宣告 ${sitemaps.length} 個 Sitemap` : '未宣告 Sitemap 網址'}${blockedAi.length ? `；另偵測到阻擋 ${blockedAi.join('、')}` : ''}。`;
+    add('robots-txt', rStatus, rDetail, [], { customExcerpt: page.httpMeta.robotsTxt.slice(0, 1200) });
+  } else {
+    add('robots-txt', 'UNKNOWN', '離線 HTML 未包含網站根目錄的 robots.txt；改用線上網址檢測即可自動檢查。');
+  }
+
+  // 5. WordPress Plugin Conflict check
+  const wpStatus = wpStack.seoPlugins.length > 1 ? 'FAIL' : wpStack.isWordPress ? 'PASS' : 'NOT_APPLICABLE';
+  const wpDetail = wpStack.seoPlugins.length > 1
+    ? `偵測到同時啟用多個 SEO 外掛（${wpStack.seoPlugins.join(' + ')}），這容易造成重複輸出 Canonical、Title 與 Schema 衝突，請只保留一套！`
+    : wpStack.seoPlugins.length === 1
+    ? `偵測到 WordPress 搭配 ${wpStack.seoPlugins[0]}${wpStack.builders.length ? `（${wpStack.builders.join('、')}）` : ''}，無多重 SEO 外掛衝突。`
+    : wpStack.isWordPress
+    ? `偵測到 WordPress 網站${wpStack.builders.length ? `（${wpStack.builders.join('、')}）` : ''}，未偵測到常見 SEO 外掛（如 Yoast 或 Rank Math），建議安裝一套協助管理標題與 Schema。`
+    : '未偵測到 WordPress 特徵（本項僅針對 WordPress 外掛衝突檢查）。';
+  add('wp-stack', wpStatus, wpDetail);
+
+  // 6. Open Graph (LINE / FB Share Card)
+  const ogTitle = attr(propMetas('og:title')[0], 'content').trim();
+  const ogDesc = attr(propMetas('og:description')[0], 'content').trim();
+  const ogImageRaw = attr(propMetas('og:image')[0], 'content').trim();
+  const ogImageValid = ogImageRaw && /^https?:\/\//i.test(ogImageRaw) ? resolved(ogImageRaw, page.url) : null;
+  const ogMissing = [!ogTitle ? '分享標題（og:title）' : '', !ogDesc ? '分享簡介（og:description）' : '', !ogImageValid ? '有效縮圖（og:image）' : ''].filter(Boolean);
+  const ogStatus = ogMissing.length ? 'WARNING' : 'PASS';
+  const ogDetail = ogMissing.length
+    ? `社群分享設定缺少：${ogMissing.join('、')}。貼到 LINE 或 Facebook 時可能會沒有縮圖或顯示雜亂。`
+    : `已設定完整的 Open Graph（標題、簡介與縮圖），分享到 LINE／Facebook 可正常顯示卡片。`;
+  add('open-graph', ogStatus, ogDetail, [...propMetas('og:title'), ...propMetas('og:description'), ...propMetas('og:image')]);
+
+  // 7. H1
   const h1 = tags('h1');
   const h1Text = h1.length ? readableText(h1[0]) : '';
   const h1Status = h1.length === 1 && h1Text ? 'PASS' : 'WARNING';
   const h1Detail = h1.length === 0 ? '找不到頁面主標題（H1），建議在文章最上方設定一個主標題。'
-    : h1.length > 1 ? `頁面出現 ${h1.length} 個 H1（${h1.map(readableText).filter(Boolean).join(' / ') || '含空白標題'}），建議只保留 1 個主要標題，其餘改用 H2。`
+    : h1.length > 1 ? `頁面出現 ${h1.length} 個 H1（${h1.map(n => readableText(n)).filter(Boolean).join(' / ') || '含空白標題'}），建議只保留 1 個主要標題，其餘改用 H2。`
     : !h1Text ? '偵測到空白的 H1 標籤，請填入可見的主標題文字。'
     : `主標題：「${h1Text}」。`;
   add('h1', h1Status, h1Detail, h1);
 
-  // 5. Heading outline & hierarchy (H1-H6)
+  // 8. Heading outline & hierarchy (H1-H6)
   const headingNodes = all.filter(n => /^h[1-6]$/.test(n.tagName || ''));
   const outline = headingNodes.map(n => ({ level: Number(n.tagName[1]), text: readableText(n) || '（空白標題）' }));
   const skipped = [];
@@ -381,9 +481,11 @@ export function auditPage(input) {
     }
   }
   const h2Count = outline.filter(h => h.level === 2).length;
-  const mainText = mainNodes.filter(n => n.nodeName === '#text').length
+  const fallbackMainText = mainNodes.filter(n => n.nodeName === '#text').length
     ? readableText({ childNodes: mainNodes.filter(n => n.tagName === 'main' || n.tagName === 'article').length ? [all.find(n => n.tagName === 'main' || n.tagName === 'article')] : [all.find(n => n.tagName === 'body') || tree] }, ['header', 'nav', 'footer', 'aside', 'script', 'style', 'template', 'noscript'])
     : '';
+  const usedReadability = Boolean(page.extracted?.textContent && page.extracted.textContent.trim().length > 20);
+  const mainText = usedReadability ? page.extracted.textContent.trim() : fallbackMainText;
   const mainWordCount = countWordsOrCjk(mainText);
   const needsH2 = mainWordCount >= 400 && h2Count === 0;
   const headingStatus = (skipped.length || needsH2) ? 'WARNING' : 'PASS';
@@ -396,7 +498,7 @@ export function auditPage(input) {
     : '頁面目前沒有小標結構（H2／H3）。';
   add('heading-structure', headingStatus, headingDetail, headingNodes);
 
-  // 6. Readability (wall of text, scannability, thin content)
+  // 9. Readability (wall of text, scannability, thin content)
   const paragraphs = tags('p', mainNodes).map(p => ({ node: p, text: readableText(p) })).filter(p => p.text.length > 0);
   const longParagraphs = paragraphs.filter(p => {
     const cjk = (p.text.match(/[\u2E80-\u9FFF\uF900-\uFAFF]/g) || []).length;
@@ -414,10 +516,10 @@ export function auditPage(input) {
     ? `抓到的正文偏少（約 ${mainWordCount} 字）。若這不是純著陸頁，可能內容太薄，或正文靠 JavaScript 載入導致搜尋引擎看不到。`
     : lacksScannability
     ? `正文約 ${mainWordCount} 字，但沒有小標、條列清單或表格，整片純文字較難掃讀。`
-    : `正文約 ${mainWordCount} 字，段落長度適中${listCount || tableCount ? `，包含 ${listCount} 個清單、${tableCount} 個表格方便掃讀` : ''}。`;
+    : `正文約 ${mainWordCount} 字${usedReadability ? '（已透過 Mozilla Readability 過濾側邊欄雜訊）' : ''}，段落長度適中${listCount || tableCount ? `，包含 ${listCount} 個清單、${tableCount} 個表格方便掃讀` : ''}。`;
   add('readability', readStatus, readDetail, longParagraphs.length ? longParagraphs.map(p => p.node) : paragraphs.slice(0, 1).map(p => p.node));
 
-  // 7. Links quality (internal, external, crawlability, anchor text)
+  // 10. Links quality (internal, external, crawlability, anchor text)
   const pageOrigin = new URL(page.url).origin;
   const allIds = new Set(all.flatMap(n => [attr(n, 'id'), n.tagName === 'a' ? attr(n, 'name') : '']).filter(Boolean));
   const contentLinks = tags('a', mainNodes);
@@ -455,7 +557,7 @@ export function auditPage(input) {
   if (noInternal) linkParts.push('正文缺少連往站內其他頁面的內部連結，建議引導讀者延伸閱讀');
   add('links-quality', linkStatus, linkParts.join('；') + '。', brokenLinks.length ? brokenLinks : genericLinks.length ? genericLinks.map(g => g.node) : contentLinks.slice(0, 3));
 
-  // 8. Image alt (+ filename-like alt & layout stability hint)
+  // 11. Image alt (+ filename-like alt & layout stability hint)
   const images = tags('img');
   const missingAlt = images.filter(n => !n.attrs.some(a => a.name === 'alt'));
   const emptyAlt = images.filter(n => n.attrs.some(a => a.name === 'alt') && !attr(n, 'alt').trim());
@@ -469,7 +571,7 @@ export function auditPage(input) {
       (missingSize.length ? `；另有 ${missingSize.length} 張未設寬高（可能造成手機載入時畫面跳動）。` : '。');
   add('image-alt', imgStatus, imgDetail, missingAlt.length ? missingAlt : filenameAlt.length ? filenameAlt : emptyAlt.length ? emptyAlt : images);
 
-  // 9. JSON-LD (+ actual @type extraction)
+  // 12. JSON-LD (+ actual @type extraction)
   const jsonld = tags('script').filter(n => attr(n, 'type').trim().toLowerCase() === 'application/ld+json');
   const parsedSchemas = [];
   const invalidJson = [];
@@ -484,14 +586,14 @@ export function auditPage(input) {
       : `共 ${jsonld.length} 段結構化資料語法正確，偵測到類型：${schemaTypes.length ? schemaTypes.join('、') : '未標註 @type'}。`,
     invalidJson.length ? invalidJson : jsonld);
 
-  // 10. E-E-A-T (Author & Date signals)
+  // 13. E-E-A-T (Author & Date signals, enhanced with Readability byline/publishedTime)
   const timeNodes = tags('time');
   const dateMetas = [...propMetas('article:published_time'), ...propMetas('article:modified_time'), ...metas('date')];
   const authorNodes = all.filter(n => (n.tagName === 'a' && tokens(attr(n, 'rel')).includes('author')) || (n.tagName === 'meta' && attr(n, 'name').toLowerCase() === 'author'));
   const schemaHasDate = parsedSchemas.some(o => hasJsonLdKey(o, ['datePublished', 'dateModified']));
   const schemaHasAuthor = parsedSchemas.some(o => hasJsonLdKey(o, ['author', 'publisher', 'brand']));
-  const hasDate = timeNodes.length > 0 || dateMetas.length > 0 || schemaHasDate;
-  const hasAuthor = authorNodes.length > 0 || schemaHasAuthor;
+  const hasDate = timeNodes.length > 0 || dateMetas.length > 0 || schemaHasDate || Boolean(page.extracted?.publishedTime);
+  const hasAuthor = authorNodes.length > 0 || schemaHasAuthor || Boolean(page.extracted?.byline);
   const eeatStatus = (hasDate || hasAuthor) ? 'PASS' : 'WARNING';
   const eeatDetail = hasDate && hasAuthor ? '已偵測到日期與作者／品牌標記，有助於建立內容可信度。'
     : hasDate ? '已偵測到日期標記；若為文章或專業解說頁，可再補充作者或品牌背書。'
@@ -499,7 +601,7 @@ export function auditPage(input) {
     : '未偵測到發布／更新日期或作者標記，建議補上以提升讀者與 Google 的信任度（E-E-A-T）。';
   add('eeat-signals', eeatStatus, eeatDetail, [...timeNodes, ...authorNodes].slice(0, 2));
 
-  // 11. Canonical
+  // 14. Canonical
   const canonical = links('canonical');
   const canonicalUrl = canonical.length === 1 && attr(canonical[0], 'href').trim() ? resolved(attr(canonical[0], 'href'), documentBase || page.url) : null;
   add('canonical', canonical.length > 1 || (canonical.length === 1 && !canonicalUrl) ? 'FAIL' : !canonicalUrl || canonicalUrl !== page.url ? 'WARNING' : 'PASS',
@@ -509,11 +611,11 @@ export function auditPage(input) {
       : `代表網址正確指向本頁（${canonicalUrl}）。`,
     canonical);
 
-  // 12. HTML lang
+  // 15. HTML lang
   const htmlLang = htmlEl ? attr(htmlEl, 'lang').trim() : '';
   add('html-lang', htmlLang ? 'PASS' : 'WARNING', htmlLang ? `網頁語言宣告為「${htmlLang}」。` : '缺少 <html lang="..."> 語言宣告，建議在 WordPress「設定 → 一般」確認網站語言。', htmlEl ? [htmlEl] : []);
 
-  // 13. Viewport
+  // 16. Viewport
   const viewport = metas('viewport');
   add('viewport', viewport.length === 1 && /(?:^|[,;\s])width\s*=\s*device-width(?:[,;\s]|$)/i.test(attr(viewport[0], 'content')) ? 'PASS' : 'WARNING',
     viewport.length === 1 && /(?:^|[,;\s])width\s*=\s*device-width(?:[,;\s]|$)/i.test(attr(viewport[0], 'content'))
@@ -521,14 +623,14 @@ export function auditPage(input) {
       : '缺少標準手機版 viewport 設定，行動裝置開啟可能會版面過小。',
     viewport);
 
-  // 14. Hreflang
+  // 17. Hreflang
   const alternates = links('alternate').filter(n => attr(n, 'hreflang'));
   const invalidAlt = alternates.filter(n => !/^(?:x-default|[a-zA-Z]{2,3}(?:-[a-zA-Z0-9]{2,8})*)$/.test(attr(n, 'hreflang')) || !attr(n, 'href').trim() || !/^https?:\/\//i.test(attr(n, 'href')) || !resolved(attr(n, 'href'), page.url));
   add('hreflang', !page.context.multilingual ? 'NOT_APPLICABLE' : invalidAlt.length ? 'FAIL' : !alternates.length ? 'WARNING' : 'UNKNOWN',
     !page.context.multilingual ? '未勾選多語系頁面。' : `${alternates.length} 個頁內語系標記，${invalidAlt.length} 個格式或網址異常；跨頁互連需另行確認。`,
     invalidAlt.length ? invalidAlt : alternates);
 
-  // 15. Product Spec Table (optional)
+  // 18. Product Spec Table (optional)
   const cellFlags = new Map();
   for (let i = all.length - 1; i >= 0; i--) {
     const n = all[i];
@@ -541,7 +643,7 @@ export function auditPage(input) {
     !page.context.product ? '未勾選產品頁。' : tables.length ? `找到 ${tables.length} 個含標題列的文字表格。` : '產品頁未找到文字規格表格，若規格只放在圖片裡，建議補上文字表格。',
     tables);
 
-  // 16. Product RFQ (optional)
+  // 19. Product RFQ (optional)
   const rfq = tags('a').filter(n => {
     if (!/詢價|聯絡|联系|聯繫|rfq|quote|contact/i.test(readableText(n))) return false;
     const href = attr(n, 'href').trim();
@@ -557,9 +659,9 @@ export function auditPage(input) {
     !page.context.product ? '未勾選產品頁。' : rfq.length ? `找到 ${rfq.length} 個詢價／聯絡入口連結。` : '產品頁未找到明顯的詢價或聯絡按鈕，建議補上明確入口。',
     rfq);
 
-  // 17-19. External boundaries
-  add('http', 'UNKNOWN', '只分析 HTML 本文；實際索引與 HTTP 標頭請用 Google Search Console 確認。');
-  add('site-resources', 'UNKNOWN', '全站 Sitemap、robots.txt 與失效連結需由 Search Console 或全站工具確認。');
+  // 20-22. External boundaries
+  add('http', 'UNKNOWN', '只分析 HTML 本文；實際索引與轉址鏈請用 Google Search Console 確認。');
+  add('site-resources', 'UNKNOWN', '全站 Sitemap 與失效連結需由 Search Console 或全站工具確認。');
   add('semantic', 'UNKNOWN', '未執行 JavaScript；真實排名與內容專業度需由人工確認。');
 
   const preview = {
@@ -568,8 +670,10 @@ export function auditPage(input) {
     description: descText,
     descUnits,
     url: page.url,
+    og: { title: ogTitle || titleText, description: ogDesc || descText, image: ogImageValid || '', hasExplicitOg: Boolean(ogTitle || ogDesc || ogImageValid) },
+    wpStack,
     outline: outline.slice(0, 30),
-    stats: { words: mainWordCount, paragraphs: paragraphs.length, longParagraphs: longParagraphs.length, internalLinks: internalCount, externalLinks: externalCount, images: images.length, schemaTypes },
+    stats: { words: mainWordCount, usedReadability, paragraphs: paragraphs.length, longParagraphs: longParagraphs.length, internalLinks: internalCount, externalLinks: externalCount, images: images.length, schemaTypes },
   };
 
   return { ruleVersion: RULE_VERSION, page, results, preview, auditedAt: new Date().toISOString() };
@@ -658,8 +762,8 @@ export function compilePrompt(audits, plan, { tool = '通用 AI 助手', scope =
 
 export function reportHtml({ before = [], after = [], history = [], plan = [] }) {
   const e = escapeHtml;
-  const finding = r => `<article><h3>${e(r.name)} · ${e(STATUS_LABELS[r.status] || r.status)}</h3><p>${e(r.detail)}</p><p><strong>為什麼要改：</strong>${e(r.advice.why)}</p><p><strong>在 WordPress 哪裡做：</strong>${e(r.advice.where)}</p><ol>${r.advice.steps.map(s => `<li>${e(s)}</li>`).join('')}</ol><details><summary>技術證據（${r.evidence.line ? '第 ' + r.evidence.line + ' 行' : '全文檢查'}）</summary><pre>${e(r.evidence.excerpt)}</pre><p>${e(r.standard)} · <a href="${e(r.source)}">Google 參考來源</a></p></details></article>`;
+  const finding = r => `<article><h3>${e(r.name)} · ${e(STATUS_LABELS[r.status] || r.status)}</h3><p>${e(r.detail)}</p><p><strong>為什麼要改：</strong>${e(r.advice.why)}</p><p><strong>在 WordPress 哪裡做：</strong>${e(r.advice.where)}</p><ol>${r.advice.steps.map(s => `<li>${e(s)}</li>`).join('')}</ol><details><summary>技術證據（${r.evidence.line ? '第 ' + r.evidence.line + ' 行' : '全文檢查'}）</summary><pre>${e(r.evidence.excerpt)}</pre><p>${e(r.standard)} · <a href="${e(r.source)}">參考來源</a></p></details></article>`;
   const auditSection = (title, audits) => `<h2>${title}</h2>${audits.map(a => `<section><h3>${e(a.page.url)}</h3><p>資料來源：${e(a.page.sourceKind)} · 取得時間 ${e(a.page.capturedAt)} · 規則 ${e(a.ruleVersion)}</p>${a.results.filter(r => r.category !== 'boundary').map(finding).join('')}</section>`).join('')}`;
   const comparison = after.length ? `<h2>前後比較</h2><table><tr><th>頁面</th><th>檢查</th><th>之前</th><th>之後</th><th>結果</th></tr>${compareAudits(before, after, history[1]?.audits || []).map(r => `<tr><td>${e(r.pageUrl)}</td><td>${e(r.name)}</td><td>${e(r.before?.status || '無資料')}</td><td>${e(r.after?.status || '無資料')}</td><td>${e(r.change)} ${e(r.reason)}</td></tr>`).join('')}</table>` : '';
-  return `<!doctype html><html lang="zh-Hant"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'"><title>WP Search Lab 檢測報告</title><style>body{font:16px/1.7 system-ui,sans-serif;color:#302b28;max-width:960px;margin:40px auto;padding:0 24px;background:#fcfaf6}h1{font-size:28px}h2{margin-top:36px}article{background:#fff;border:1px solid #e7ddd3;padding:20px;margin:16px 0;border-radius:14px}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f4eee7;padding:12px;border-radius:8px}table{border-collapse:collapse;width:100%;background:#fff}td,th{border:1px solid #e7ddd3;padding:8px;overflow-wrap:anywhere}p{overflow-wrap:anywhere}@media print{article{break-inside:avoid}}</style><h1>WP Search Lab 檢測報告</h1><p>匯出 ${e(new Date().toISOString())}。僅根據靜態 HTML 結構分析；修改前建議先保留原值或使用 WordPress 修訂版本。</p><h2>改善計畫</h2><ol>${plan.map(t => `<li>${e(t.finding?.name || t.findingKey)}：${t.included ? '本次處理' : '暫緩'}。${e(t.note)}</li>`).join('')}</ol>${comparison}${auditSection('改善前檢測', before)}${auditSection('改善後檢測', after)}<h2>重新驗證紀錄</h2><ul>${history.map(h => `<li>${e(h.at)} · ${h.pages} 頁 · 已修正 ${h.fixed} · 回歸 ${h.regressed} · 待確認 ${h.unknown}</li>`).join('')}</ul><p>WP Search Lab · 規則 ${RULE_VERSION} · parse5 (MIT)、entities (BSD-2-Clause)。</p></html>`;
+  return `<!doctype html><html lang="zh-Hant"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'"><title>WP Search Lab 檢測報告</title><style>body{font:16px/1.7 system-ui,sans-serif;color:#302b28;max-width:960px;margin:40px auto;padding:0 24px;background:#fcfaf6}h1{font-size:28px}h2{margin-top:36px}article{background:#fff;border:1px solid #e7ddd3;padding:20px;margin:16px 0;border-radius:14px}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f4eee7;padding:12px;border-radius:8px}table{border-collapse:collapse;width:100%;background:#fff}td,th{border:1px solid #e7ddd3;padding:8px;overflow-wrap:anywhere}p{overflow-wrap:anywhere}@media print{article{break-inside:avoid}}</style><h1>WP Search Lab 檢測報告</h1><p>匯出 ${e(new Date().toISOString())}。僅根據靜態 HTML 結構分析；修改前建議先保留原值或使用 WordPress 修訂版本。</p><h2>改善計畫</h2><ol>${plan.map(t => `<li>${e(t.finding?.name || t.findingKey)}：${t.included ? '本次處理' : '暫緩'}。${e(t.note)}</li>`).join('')}</ol>${comparison}${auditSection('改善前檢測', before)}${auditSection('改善後檢測', after)}<h2>重新驗證紀錄</h2><ul>${history.map(h => `<li>${e(h.at)} · ${h.pages} 頁 · 已修正 ${h.fixed} · 回歸 ${h.regressed} · 待確認 ${h.unknown}</li>`).join('')}</ul><p>WP Search Lab · 規則 ${RULE_VERSION} · 採用開源元件：parse5 (MIT)、entities (BSD-2-Clause)、robots-parser (MIT)、@mozilla/readability (Apache-2.0)。</p></html>`;
 }

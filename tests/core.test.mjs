@@ -8,7 +8,7 @@ const snapshot=(html,extra={})=>({url:'https://example.test/products/p-100',html
 const status=(audit,id)=>audit.results.find(r=>r.ruleId===id).status;
 test('known-bad fixture detects missing title, image alt and invalid JSON with original evidence',()=>{const a=auditPage(snapshot(before));for(const id of ['title','image-alt','jsonld'])assert.equal(status(a,id),'FAIL');for(const id of ['description','h1','viewport','spec-table','rfq'])assert.equal(status(a,id),'WARNING');for(const r of a.results.filter(r=>r.evidence.line!==null))assert.ok(before.includes(r.evidence.excerpt));assert.equal(status(a,'hreflang'),'NOT_APPLICABLE')});
 test('corrected fixture passes only supported checks and keeps unknown boundaries',()=>{const a=auditPage(snapshot(after));for(const id of ['title','description','h1','canonical','image-alt','jsonld','viewport','spec-table','rfq','robots-meta'])assert.equal(status(a,id),'PASS',id);for(const id of ['http','site-resources','semantic'])assert.equal(status(a,id),'UNKNOWN',id)});
-test('bad-to-good fixture resolves eight concrete problems and retains evidence',()=>{const a=auditPage(snapshot(before)),b=auditPage(snapshot(after));const pairs=compareAudits([a],[b]);assert.equal(pairs.filter(r=>r.change==='已修正').length,8);assert.equal(pairs.filter(r=>r.change==='待確認').length,3);assert.equal(a.page.html,before);assert.equal(b.page.html,after)});
+test('bad-to-good fixture resolves eight concrete problems and retains evidence',()=>{const a=auditPage(snapshot(before)),b=auditPage(snapshot(after));const pairs=compareAudits([a],[b]);assert.equal(pairs.filter(r=>r.change==='已修正').length,8);assert.equal(pairs.filter(r=>r.change==='待確認').length,4);assert.equal(a.page.html,before);assert.equal(b.page.html,after)});
 test('duplicate title/canonical and malformed JSON are detected',()=>{const a=auditPage(snapshot('<title>A</title><title>B</title><link rel="canonical" href="https://example.test/a"><link rel="canonical" href="https://example.test/b"><script type="application/ld+json">{,}</script>'));for(const id of ['title','canonical','jsonld'])assert.equal(status(a,id),'FAIL')});
 test('intentional noindex, multiple H1 and decorative alt do not get blanket failure',()=>{const a=auditPage(snapshot('<meta name="robots" content="NoINDEX,follow"><h1>A</h1><h1>B</h1><img alt="" src="x">'));assert.equal(status(a,'robots-meta'),'WARNING');assert.equal(status(a,'h1'),'WARNING');assert.equal(status(a,'image-alt'),'UNKNOWN')});
 test('non-product page does not apply industrial heuristics',()=>{const a=auditPage(snapshot(before,{context:{product:false,multilingual:false}}));assert.equal(status(a,'spec-table'),'NOT_APPLICABLE');assert.equal(status(a,'rfq'),'NOT_APPLICABLE')});
@@ -30,4 +30,19 @@ test('google SEO/AIO, links, readability and filename alt rules detect real issu
   assert.deepEqual(a.preview.stats.schemaTypes,['Article']);
   const single=compileSinglePrompt(a.results.find(r=>r.ruleId==='readability'));
   assert.match(single,/WordPress/);
+});
+test('robots.txt, X-Robots-Tag, WP plugin conflict, Open Graph and Readability extraction work',()=>{
+  const html='<!doctype html><html lang="zh-Hant"><head><title>WordPress SEO 教學指南</title><meta property="og:title" content="教學"><meta property="og:description" content="完整說明"><meta property="og:image" content="https://example.test/og.jpg"><!-- This site is optimized with the Yoast SEO plugin --><!-- Search Engine Optimization by Rank Math --></head><body><h1>教學</h1><p>短文。</p></body></html>';
+  const a=auditPage(snapshot(html,{
+    context:{product:false,multilingual:false},
+    httpMeta:{status:200,xRobotsTag:'noindex, nofollow',robotsTxt:'User-agent: Googlebot\nDisallow: /products/\n',robotsUrl:'https://example.test/robots.txt'},
+    extracted:{textContent:'這是由 Mozilla Readability 過濾雜訊後抽出的完整正文內容。'.repeat(6),byline:'Nio',publishedTime:'2026-11-25'},
+  }));
+  assert.equal(status(a,'robots-meta'),'WARNING');
+  assert.equal(status(a,'robots-txt'),'FAIL');
+  assert.equal(status(a,'wp-stack'),'FAIL');
+  assert.equal(status(a,'open-graph'),'PASS');
+  assert.equal(status(a,'eeat-signals'),'PASS');
+  assert.equal(status(a,'readability'),'PASS');
+  assert.equal(a.preview.stats.usedReadability,true);
 });
