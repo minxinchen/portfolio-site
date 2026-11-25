@@ -1,0 +1,454 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#fcfaf6">
+<meta name="description" content="TCGA-KIRC 存活分析切點與混雜因子敏感度探索器：用 524 位真實公開癌症臨床資料，親手體驗切點 P-hacking、群組存活曲線比較與交叉驗證信賴區間。">
+<title>TCGA-KIRC 存活敏感度實驗室 · Nio</title>
+<link rel="canonical" href="https://portfolio-site-1b8.pages.dev/tools/survival-evidence-lab/">
+<meta property="og:title" content="TCGA-KIRC 存活敏感度實驗室 · Nio">
+<meta property="og:description" content="拖動切點滑桿、切換分期與混雜因子校正，親眼看見統計 p 值與信賴區間如何變化。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://portfolio-site-1b8.pages.dev/tools/survival-evidence-lab/">
+<meta property="og:image" content="https://portfolio-site-1b8.pages.dev/assets/og-card.png">
+<style>
+:root{--paper:#fcfaf6;--panel:#fffdf9;--soft:#f4eee7;--ink:#302b28;--muted:#796e66;--brand:#8d543a;--brand-dark:#70402e;--line:#e7ddd3;--good:#246342;--good-bg:#e7f3ec;--warn:#8c5d12;--warn-bg:#fef3da;--bad:#a53028;--bad-bg:#fce8e6;font:15px/1.65 -apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;color:var(--ink);background:var(--paper)}
+*{box-sizing:border-box}body{margin:0;background:var(--paper)}a{color:var(--brand-dark)}
+.site-header{height:76px;position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:20px;padding:0 32px;background:#fcfaf6f5;border-bottom:1px solid var(--line)}
+.logo{display:inline-flex;align-items:baseline;gap:7px;text-decoration:none;color:var(--ink)}.logo strong{font:700 30px/1 Georgia,serif;letter-spacing:-.08em}.logo strong span{color:#b17353}.logo small{font-size:10px;letter-spacing:.18em;color:var(--muted)}
+.site-header nav{display:flex;align-items:center;gap:22px}.site-header nav a{font-size:13px;color:#6f645c;text-decoration:none}.site-header nav a:hover{text-decoration:underline}
+.site-header nav .pill-link{border:1px solid #d9cec4;border-radius:99px;padding:6px 13px;color:var(--brand)}
+.wrap{max-width:1120px;margin:0 auto;padding:28px 24px 64px}
+.kicker{font-size:11px;font-weight:700;letter-spacing:1.6px;color:var(--brand);margin:0 0 8px}
+h1{font-size:30px;line-height:1.3;margin:0 0 10px;letter-spacing:-.5px}
+.lead{color:var(--muted);max-width:780px;margin:0 0 22px;font-size:15px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px}
+.tab{cursor:pointer;border:1px solid var(--line);background:var(--panel);color:var(--muted);padding:10px 18px;border-radius:99px;font:600 14px/1.2 inherit;transition:all .12s}
+.tab:hover{border-color:var(--brand);color:var(--ink)}
+.tab.active{background:#38302d;border-color:#38302d;color:#fff}
+.grid{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(290px,1fr);gap:20px;align-items:start}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:22px;margin-bottom:18px}
+.panel h2{font-size:18px;margin:0 0 8px}.panel h3{font-size:15px;margin:0 0 8px}
+.sub{font-size:13px;color:var(--muted);margin:0 0 14px}
+.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:16px}
+.btn{cursor:pointer;border:1px solid #d9cec4;background:var(--paper);color:var(--ink);padding:7px 13px;border-radius:99px;font:600 12px/1.2 inherit}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.active{background:var(--brand);border-color:var(--brand);color:#fff}
+.slider-box{background:var(--soft);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:16px}
+.slider-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;gap:10px;flex-wrap:wrap}
+.slider-head strong{font-size:18px;color:var(--brand-dark)}
+input[type=range]{width:100%;accent-color:var(--brand);height:6px;cursor:pointer}
+.svg-wrap{background:#fff;border:1px solid #ece3d8;border-radius:14px;padding:12px;overflow:hidden}
+svg{width:100%;height:auto;display:block}
+.legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:10px;font-size:12px;color:var(--ink)}
+.legend-item{display:inline-flex;align-items:center;gap:6px}.dot{width:11px;height:11px;border-radius:3px;display:inline-block}
+.grade-card{border-radius:14px;padding:16px 18px;border:1px solid var(--line);margin-bottom:14px}
+.grade-card.good{background:var(--good-bg);border-color:#c6e2d1;color:var(--good)}
+.grade-card.warn{background:var(--warn-bg);border-color:#efd69b;color:var(--warn)}
+.grade-card.bad{background:var(--bad-bg);border-color:#f2c6c2;color:var(--bad)}
+.grade-badge{font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase}
+.grade-card strong{display:block;font-size:21px;margin:4px 0}
+.grade-card p{margin:0;font-size:13px;color:var(--ink)}
+.kv-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px}
+.kv{background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:11px 13px}
+.kv span{display:block;font-size:11px;color:var(--muted)}.kv b{display:block;font-size:17px;margin-top:2px}
+.savant-row{margin-bottom:12px}.savant-head{display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px}
+.savant-track{height:12px;background:#efe8df;border-radius:99px;overflow:hidden}
+.savant-fill{height:100%;border-radius:99px;transition:width .2s}
+.scan-strip{display:flex;gap:2px;height:26px;align-items:flex-end;margin:10px 0 6px}
+.scan-bar{flex:1;border-radius:3px 3px 0 0;min-height:4px;cursor:pointer;transition:opacity .12s}
+.scan-bar:hover{opacity:.75}
+.callout{background:var(--soft);border-left:4px solid var(--brand);border-radius:10px;padding:13px 16px;font-size:13px;color:#473f3a;margin-top:12px}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:10px 8px;border-bottom:1px solid var(--line);text-align:left}th{background:var(--soft);color:var(--muted);font-size:12px}
+.foot{margin-top:30px;padding-top:18px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
+.hidden{display:none}
+@media(max-width:860px){.grid{grid-template-columns:1fr}.site-header{padding:0 16px}.site-header nav a:not(.pill-link){display:none}}
+</style>
+</head>
+<body>
+<header class="site-header">
+  <a class="logo" href="/"><strong>Nio<span>.</span></strong><small>MINXIN CHEN</small></a>
+  <nav aria-label="導覽">
+    <a href="/">首頁</a>
+    <a href="/projects/index.html">作品</a>
+    <a href="/tools/wp-search-lab/">WP Search Lab</a>
+    <a class="pill-link" href="/projects/nera.html">研究說明 ↗</a>
+  </nav>
+</header>
+
+<main class="wrap">
+  <p class="kicker">BIOMEDICAL EVIDENCE · REAL TCGA-KIRC DATA (N = 524, 175 EVENTS)</p>
+  <h1>TCGA-KIRC 存活分析切點與混雜因子敏感度實驗室</h1>
+  <p class="lead">用 524 位腎細胞癌（TCGA-KIRC）真實公開臨床資料，親手拖動切點、比較分期分級，並看懂為什麼「單變量 p 值很顯著」在嚴謹交叉驗證下往往並不成立。</p>
+
+  <div class="tabs" role="tablist">
+    <button class="tab active" data-tab="phack" role="tab">01 · 切點 P-Hacking 實驗室</button>
+    <button class="tab" data-tab="vs" role="tab">02 · 群組 VS 對決（Savant 風）</button>
+    <button class="tab" data-tab="cp04" role="tab">03 · 嚴謹驗證對照（CP04 v2）</button>
+  </div>
+
+  <!-- TAB 1: Cutpoint P-hacking -->
+  <section id="tab-phack">
+    <div class="grid">
+      <div class="panel">
+        <h2>拖動切點滑桿，看 p 值怎麼被「挑出來」</h2>
+        <p class="sub">許多論文會用程式把所有切點掃過一遍、只報告 p 值最小的那一個（Optimal Cutoff）。你可以親手試試看。</p>
+        <div class="controls" id="stage-filter">
+          <span style="font-size:12px;color:var(--muted)">篩選病患分期：</span>
+          <button class="btn active" data-stage="ALL">全世代（524 人）</button>
+          <button class="btn" data-stage="EARLY">早期 Stage I–II</button>
+          <button class="btn" data-stage="LATE">晚期 Stage III–IV</button>
+        </div>
+        <div class="slider-box">
+          <div class="slider-head">
+            <span>年齡分組切點（&lt; 切點 vs. ≥ 切點）</span>
+            <strong id="cut-label">60 歲</strong>
+          </div>
+          <input id="cut-slider" type="range" min="45" max="75" value="60" step="1" aria-label="年齡切點">
+          <div class="controls" style="margin:12px 0 0">
+            <button class="btn" id="btn-median">標準中位數（60 歲）</button>
+            <button class="btn" id="btn-bestp">刻意挑出最小 p 值（P-hacking）</button>
+            <button class="btn" id="btn-worstp">挑出最不顯著切點</button>
+          </div>
+        </div>
+        <div class="svg-wrap" id="km-phack"></div>
+        <div class="legend" id="legend-phack"></div>
+      </div>
+
+      <div>
+        <div class="grade-card" id="risk-card">
+          <span class="grade-badge" id="risk-badge">計算中…</span>
+          <strong id="risk-title">—</strong>
+          <p id="risk-desc">—</p>
+        </div>
+        <div class="panel">
+          <h3>目前切點統計摘要</h3>
+          <div class="kv-grid" id="kv-phack"></div>
+          <h3 style="margin-top:14px">全切點掃描（45–75 歲共 31 個切點）</h3>
+          <p class="sub" id="scan-note">深棕色柱子代表該切點出現 p &lt; 0.05；點擊任一根柱子可直接跳過去。</p>
+          <div class="scan-strip" id="scan-strip"></div>
+          <div class="callout">
+            <strong>為什麼這很重要？</strong> 只要把 31 個切點都試一遍再挑最小的 p 值，即使真實差異很弱，也容易把雜訊包裝成「統計顯著」（Optimism Bias）。正規研究應預先指定切點或將連續變數直接納入多變量模型。
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TAB 2: Savant VS -->
+  <section id="tab-vs" class="hidden">
+    <div class="grid">
+      <div class="panel">
+        <h2>真實病患群組存活曲線比較</h2>
+        <p class="sub">選擇不同臨床分組，直接比較各組 Kaplan-Meier 存活曲線與 1 年／3 年／5 年存活率。</p>
+        <div class="controls" id="vs-controls">
+          <button class="btn active" data-group="stage">腫瘤分期（Stage I–IV）</button>
+          <button class="btn" data-group="grade">病理分級（Grade G1–2 / G3 / G4）</button>
+          <button class="btn" data-group="sex">性別（男 vs. 女）</button>
+        </div>
+        <div class="svg-wrap" id="km-vs"></div>
+        <div class="legend" id="legend-vs"></div>
+      </div>
+      <div class="panel">
+        <h2>5 年存活率百分條（Savant 風格）</h2>
+        <p class="sub" id="vs-summary">—</p>
+        <div id="savant-bars"></div>
+        <div class="callout" id="vs-note"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TAB 3: CP04 v2 Honest Validation -->
+  <section id="tab-cp04" class="hidden">
+    <div class="panel">
+      <h2>單變量很顯著，為什麼「加入模型」卻沒有明確改善？</h2>
+      <p class="sub">在分頁 02 你會看到病理分級（Grade）單獨畫起來存活曲線分很開（看起來超顯著）。但在真實臨床上，醫師已經知道病患的「腫瘤分期（Stage）＋年齡＋性別」。真正的問題是：<strong>在已經校正 Stage、Age、Sex 之後，多加 Grade 能不能真的讓預測變準？</strong></p>
+      <div class="grid" style="margin-top:16px">
+        <div>
+          <h3>ΔAUC 95% 信賴區間（M1 加 Grade 減去 M0 基準）</h3>
+          <p class="sub">虛線為 0（代表沒有進步）。只要橫條跨過 0，統計上就無法宣稱模型變準。</p>
+          <div class="svg-wrap" id="forest-svg"></div>
+        </div>
+        <div>
+          <div class="grade-card warn">
+            <span class="grade-badge">CP04 v2 誠實結論 · 10×5-Fold CV + 訓練折 IPCW</span>
+            <strong>未見明確增量改善（區間皆含 0）</strong>
+            <p>1 年、3 年、5 年的 ΔAUC 與 ΔBrier 95% 信賴區間全部跨過 0。這說明 Grade 單獨看雖然顯著，但大部分預後資訊已被 Stage（分期）吸收。</p>
+          </div>
+          <div class="callout">
+            <strong>這展示了什麼能力？</strong> 很多作品只會秀出好看的單變量 p 值；嚴謹的資料分析會在「校正混雜因子＋嚴格交叉驗證」後，誠實報告陰性或保守結論，不把過度配適包裝成突破。
+          </div>
+        </div>
+      </div>
+      <div style="overflow:auto;margin-top:18px">
+        <table id="cp04-table">
+          <thead><tr><th>評估時間點</th><th>M0 基準 AUC（Stage分層+Age+Sex）</th><th>M1 加入 Grade AUC</th><th>ΔAUC（95% CI）</th><th>ΔBrier（95% CI）</th><th>判讀</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <footer class="foot">
+    資料來源：公開 TCGA-KIRC 臨床世代（TCGA-CDR 2018，n = 524，事件數 = 175，去識別化，輸入檔案 SHA-256：<code id="sha-label">—</code>）。CP04 v2 結果由 Python（<code>scikit-survival 0.28</code>）與 R（<code>survival::cox.zph</code>）離線交叉驗證產出。本頁面為純靜態 HTML＋預計算資料，僅供統計方法教學與作品展示，<strong>非臨床醫療診斷工具</strong>。
+  </footer>
+</main>
+
+<script>
+const COLORS = ['#8d543a', '#2b6cb0', '#246342', '#b83227'];
+
+function erfc(x) {
+  const z = Math.abs(x), t = 1 / (1 + 0.5 * z);
+  const ans = t * Math.exp(-z * z - 1.26551223 + t * (1.00002368 + t * (0.37409196 + t * (0.09678418 + t * (-0.18628806 + t * (0.27886807 + t * (-1.13520398 + t * (1.48851587 + t * (-0.82215223 + t * 0.17087277)))))))));
+  return x >= 0 ? ans : 2 - ans;
+}
+
+function kmCurve(rows) {
+  const sorted = [...rows].sort((a, b) => a[0] - b[0]);
+  const n = sorted.length;
+  const pts = [{ t: 0, s: 1 }];
+  let atRisk = n, surv = 1, i = 0;
+  while (i < n) {
+    const t = sorted[i][0];
+    let d = 0, c = 0;
+    while (i < n && sorted[i][0] === t) { if (sorted[i][1] === 1) d++; else c++; i++; }
+    if (d > 0) {
+      surv *= (1 - d / atRisk);
+      pts.push({ t, s: surv });
+    }
+    atRisk -= (d + c);
+  }
+  const maxT = sorted.length ? sorted[sorted.length - 1][0] : 0;
+  if (maxT > pts[pts.length - 1].t) pts.push({ t: maxT, s: surv });
+  return { n, events: rows.reduce((acc, r) => acc + r[1], 0), pts };
+}
+
+function survAt(pts, day) {
+  let s = 1;
+  for (const p of pts) { if (p.t <= day) s = p.s; else break; }
+  return s;
+}
+
+function logRank2(g1, g2) {
+  const all = [...g1.map(r => [r[0], r[1], 0]), ...g2.map(r => [r[0], r[1], 1])].sort((a, b) => a[0] - b[0]);
+  let n1 = g1.length, n2 = g2.length, O1 = 0, E1 = 0, V = 0, i = 0;
+  while (i < all.length) {
+    const t = all[i][0];
+    let d1 = 0, d2 = 0, c1 = 0, c2 = 0;
+    while (i < all.length && all[i][0] === t) {
+      const ev = all[i][1], g = all[i][2];
+      if (g === 0) { if (ev) d1++; else c1++; } else { if (ev) d2++; else c2++; }
+      i++;
+    }
+    const d = d1 + d2, n = n1 + n2;
+    if (d > 0 && n > 1) {
+      O1 += d1;
+      E1 += d * (n1 / n);
+      V += (n1 * n2 * d * (n - d)) / (n * n * (n - 1));
+    }
+    n1 -= (d1 + c1); n2 -= (d2 + c2);
+  }
+  if (V <= 0) return { chi2: 0, p: 1 };
+  const chi2 = ((O1 - E1) ** 2) / V;
+  return { chi2, p: erfc(Math.sqrt(chi2 / 2)) };
+}
+
+function fmtP(p) {
+  if (p < 0.0001) return '< 0.0001';
+  if (p < 0.001) return p.toFixed(4);
+  return p.toFixed(3);
+}
+
+function renderKmSvg(targetId, legendId, series) {
+  const W = 620, H = 310, pad = { l: 48, r: 18, t: 16, b: 36 };
+  const maxDay = 3650; // 10 years
+  const x = d => pad.l + (Math.min(d, maxDay) / maxDay) * (W - pad.l - pad.r);
+  const y = s => pad.t + (1 - s) * (H - pad.t - pad.b);
+  let grid = '';
+  for (const pct of [0, 0.25, 0.5, 0.75, 1]) {
+    const yy = y(pct).toFixed(1);
+    grid += `<line x1="${pad.l}" y1="${yy}" x2="${W - pad.r}" y2="${yy}" stroke="#efe8df" stroke-width="1"/>`;
+    grid += `<text x="${pad.l - 8}" y="${Number(yy) + 4}" text-anchor="end" font-size="11" fill="#796e66">${Math.round(pct * 100)}%</text>`;
+  }
+  for (const yr of [0, 1, 3, 5, 8, 10]) {
+    const xx = x(yr * 365).toFixed(1);
+    grid += `<line x1="${xx}" y1="${pad.t}" x2="${xx}" y2="${H - pad.b}" stroke="${yr === 5 ? '#d9cec4' : '#f4eee7'}" stroke-dasharray="${yr === 5 ? '4 4' : ''}" stroke-width="1"/>`;
+    grid += `<text x="${xx}" y="${H - 12}" text-anchor="middle" font-size="11" fill="#796e66">${yr}年</text>`;
+  }
+  let paths = '';
+  series.forEach((s, idx) => {
+    const col = COLORS[idx % COLORS.length];
+    let d = `M ${x(0).toFixed(1)} ${y(1).toFixed(1)}`;
+    let prevS = 1;
+    for (const p of s.km.pts) {
+      if (p.t > maxDay) { d += ` L ${x(maxDay).toFixed(1)} ${y(prevS).toFixed(1)}`; break; }
+      d += ` L ${x(p.t).toFixed(1)} ${y(prevS).toFixed(1)} L ${x(p.t).toFixed(1)} ${y(p.s).toFixed(1)}`;
+      prevS = p.s;
+    }
+    paths += `<path d="${d}" fill="none" stroke="${col}" stroke-width="2.6" stroke-linejoin="round"/>`;
+  });
+  document.getElementById(targetId).innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Kaplan-Meier 存活曲線">${grid}${paths}</svg>`;
+  document.getElementById(legendId).innerHTML = series.map((s, idx) =>
+    `<span class="legend-item"><i class="dot" style="background:${COLORS[idx % COLORS.length]}"></i><b>${s.label}</b>（n=${s.km.n}，事件 ${s.km.events}，5年存活 ${(survAt(s.km.pts, 1825) * 100).toFixed(1)}%）</span>`
+  ).join('');
+}
+
+let DATA = null;
+let stageMode = 'ALL';
+let vsMode = 'stage';
+
+function filteredRows() {
+  if (!DATA) return [];
+  if (stageMode === 'EARLY') return DATA.rows.filter(r => r[4] === 'I' || r[4] === 'II');
+  if (stageMode === 'LATE') return DATA.rows.filter(r => r[4] === 'III' || r[4] === 'IV');
+  return DATA.rows;
+}
+
+function scanAllCutpoints(rows) {
+  const res = [];
+  for (let c = 45; c <= 75; c++) {
+    const lo = rows.filter(r => r[2] < c), hi = rows.filter(r => r[2] >= c);
+    if (lo.length < 15 || hi.length < 15) { res.push({ c, p: 1, valid: false }); continue; }
+    res.push({ c, p: logRank2(lo, hi).p, valid: true });
+  }
+  return res;
+}
+
+function renderPhack() {
+  const rows = filteredRows();
+  const cut = Number(document.getElementById('cut-slider').value);
+  document.getElementById('cut-label').textContent = `${cut} 歲`;
+  const lo = rows.filter(r => r[2] < cut), hi = rows.filter(r => r[2] >= cut);
+  const kmLo = kmCurve(lo), kmHi = kmCurve(hi);
+  const lr = logRank2(lo, hi);
+  renderKmSvg('km-phack', 'legend-phack', [
+    { label: `< ${cut} 歲`, km: kmLo },
+    { label: `≥ ${cut} 歲`, km: kmHi },
+  ]);
+
+  const scans = scanAllCutpoints(rows);
+  const validScans = scans.filter(s => s.valid);
+  const sigCount = validScans.filter(s => s.p < 0.05).length;
+  const best = validScans.reduce((a, b) => b.p < a.p ? b : a, validScans[0]);
+
+  document.getElementById('kv-phack').innerHTML = `
+    <div class="kv"><span>Log-Rank p 值</span><b>${fmtP(lr.p)}</b></div>
+    <div class="kv"><span>樣本數分配</span><b>${lo.length} vs. ${hi.length}</b></div>
+    <div class="kv"><span>&lt; ${cut} 歲 5 年存活</span><b>${(survAt(kmLo.pts, 1825) * 100).toFixed(1)}%</b></div>
+    <div class="kv"><span>≥ ${cut} 歲 5 年存活</span><b>${(survAt(kmHi.pts, 1825) * 100).toFixed(1)}%</b></div>
+  `;
+
+  const card = document.getElementById('risk-card');
+  const isPicked = cut === best.c && cut !== 60;
+  card.className = 'grade-card ' + (isPicked ? 'bad' : lr.p < 0.05 ? 'warn' : 'good');
+  document.getElementById('risk-badge').textContent = isPicked ? 'D 級 · P-Hacking 過度配適風險' : lr.p < 0.05 ? 'B 級 · 單變量顯著（尚未校正分期）' : 'S 級 · 保守判讀（未見單變量顯著）';
+  document.getElementById('risk-title').textContent = isPicked ? `切點 ${cut} 歲是 31 次嘗試裡挑出的最低 p 值` : lr.p < 0.05 ? `p = ${fmtP(lr.p)}，但仍受切點與分期影響` : `p = ${fmtP(lr.p)}（未達 0.05）`;
+  document.getElementById('risk-desc').textContent = `在目前篩選下，${validScans.length} 個有效切點中有 ${sigCount} 個會出現 p < 0.05（比例 ${Math.round(sigCount / Math.max(1, validScans.length) * 100)}%）。最小 p 值出現在 ${best.c} 歲（p = ${fmtP(best.p)}）。`;
+
+  const strip = document.getElementById('scan-strip');
+  strip.innerHTML = scans.map(s => {
+    const score = s.valid ? Math.min(100, Math.round(-Math.log10(Math.max(s.p, 1e-6)) * 18)) : 8;
+    const bg = !s.valid ? '#e7ddd3' : s.c === cut ? '#38302d' : s.p < 0.05 ? '#8d543a' : '#d9cec4';
+    return `<div class="scan-bar" data-cut="${s.c}" title="${s.c} 歲：p = ${fmtP(s.p)}" style="height:${Math.max(16, score)}%;background:${bg}"></div>`;
+  }).join('');
+}
+
+function renderVs() {
+  const rows = DATA.rows;
+  let groups = [], note = '';
+  if (vsMode === 'stage') {
+    groups = ['I', 'II', 'III', 'IV'].map(st => ({ label: `Stage ${st}`, rows: rows.filter(r => r[4] === st) }));
+    note = '腫瘤分期（Stage）是腎細胞癌最強的已知臨床預後因子：Stage I 五年存活率高達約 85%，Stage IV 則大幅下降。這也是為什麼評估任何新指標時，都必須先校正 Stage。';
+  } else if (vsMode === 'grade') {
+    groups = [
+      { label: 'G1–G2（低分級）', rows: rows.filter(r => r[5] === 'G1' || r[5] === 'G2') },
+      { label: 'G3（中分級）', rows: rows.filter(r => r[5] === 'G3') },
+      { label: 'G4（高分級）', rows: rows.filter(r => r[5] === 'G4') },
+    ];
+    note = '單獨看病理分級（Grade）時，三條曲線分得非常開！但這不代表它在臨床模型裡有「額外預測價值」——點進「03 · 嚴謹驗證對照」看校正 Stage 後的真實結果。';
+  } else {
+    groups = [
+      { label: '男性（M）', rows: rows.filter(r => r[3] === 'M') },
+      { label: '女性（F）', rows: rows.filter(r => r[3] === 'F') },
+    ];
+    note = '男性與女性在此世代中的 5 年整體存活曲線幾乎重疊，無顯著差異。';
+  }
+  const series = groups.map(g => ({ label: g.label, km: kmCurve(g.rows) }));
+  renderKmSvg('km-vs', 'legend-vs', series);
+  document.getElementById('vs-summary').textContent = `比較 ${series.length} 組真實 TCGA-KIRC 病患（總計 ${rows.length} 人）`;
+  document.getElementById('savant-bars').innerHTML = series.map((s, idx) => {
+    const s5 = survAt(s.km.pts, 1825) * 100;
+    const s1 = survAt(s.km.pts, 365) * 100;
+    return `<div class="savant-row"><div class="savant-head"><b>${s.label}</b><span>1年 ${s1.toFixed(1)}% · <b>5年 ${s5.toFixed(1)}%</b></span></div><div class="savant-track"><div class="savant-fill" style="width:${s5.toFixed(1)}%;background:${COLORS[idx % COLORS.length]}"></div></div></div>`;
+  }).join('');
+  document.getElementById('vs-note').textContent = note;
+}
+
+function renderCp04() {
+  const m0 = DATA.cv_metrics.M0_strata_age_sex;
+  const m1 = DATA.cv_metrics.M1_plus_grade3;
+  const diff = DATA.cv_diff;
+  const times = [['365', '1 年（365 天）'], ['1095', '3 年（1095 天）'], ['1825', '5 年（1825 天）']];
+  document.querySelector('#cp04-table tbody').innerHTML = times.map(([k, label]) => {
+    const d = diff[k];
+    return `<tr><td><b>${label}</b></td><td>${m0[k].AUC.toFixed(3)}</td><td>${m1[k].AUC.toFixed(3)}</td><td>${d.dAUC >= 0 ? '+' : ''}${d.dAUC.toFixed(4)}<br><small>[${d.dAUC_CI_NB[0].toFixed(4)}, ${d.dAUC_CI_NB[1].toFixed(4)}]</small></td><td>${d.dBrier >= 0 ? '+' : ''}${d.dBrier.toFixed(4)}<br><small>[${d.dBrier_CI_NB[0].toFixed(4)}, ${d.dBrier_CI_NB[1].toFixed(4)}]</small></td><td>區間含 0（未見明確改善）</td></tr>`;
+  }).join('');
+
+  const W = 520, H = 190, minX = -0.025, maxX = 0.045;
+  const x = v => 120 + ((v - minX) / (maxX - minX)) * (W - 150);
+  let svg = `<line x1="${x(0).toFixed(1)}" y1="16" x2="${x(0).toFixed(1)}" y2="${H - 30}" stroke="#a53028" stroke-dasharray="4 4" stroke-width="1.5"/>`;
+  svg += `<text x="${x(0).toFixed(1)}" y="${H - 12}" text-anchor="middle" font-size="11" fill="#a53028" font-weight="700">0（無改善）</text>`;
+  times.forEach(([k, label], i) => {
+    const y = 44 + i * 44, d = diff[k];
+    svg += `<text x="108" y="${y + 4}" text-anchor="end" font-size="12" fill="#302b28" font-weight="600">${label.split('（')[0]}</text>`;
+    svg += `<line x1="${x(d.dAUC_CI_NB[0]).toFixed(1)}" y1="${y}" x2="${x(d.dAUC_CI_NB[1]).toFixed(1)}" y2="${y}" stroke="#8d543a" stroke-width="4" stroke-linecap="round"/>`;
+    svg += `<circle cx="${x(d.dAUC).toFixed(1)}" cy="${y}" r="6" fill="#38302d"/>`;
+    svg += `<text x="${x(d.dAUC_CI_NB[1]) + 8}" y="${y + 4}" font-size="11" fill="#796e66">${d.dAUC >= 0 ? '+' : ''}${d.dAUC.toFixed(3)}</text>`;
+  });
+  document.getElementById('forest-svg').innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="ΔAUC 95% 信賴區間森林圖">${svg}</svg>`;
+}
+
+fetch('./data.json').then(r => r.json()).then(json => {
+  DATA = json;
+  document.getElementById('sha-label').textContent = json.input_sha256.slice(0, 16) + '…';
+  renderPhack(); renderVs(); renderCp04();
+});
+
+document.addEventListener('click', e => {
+  const tab = e.target.closest('.tab');
+  if (tab) {
+    document.querySelectorAll('.tab').forEach(b => b.classList.toggle('active', b === tab));
+    ['phack', 'vs', 'cp04'].forEach(k => document.getElementById('tab-' + k).classList.toggle('hidden', tab.dataset.tab !== k));
+    return;
+  }
+  const stBtn = e.target.closest('#stage-filter .btn');
+  if (stBtn) {
+    stageMode = stBtn.dataset.stage;
+    document.querySelectorAll('#stage-filter .btn').forEach(b => b.classList.toggle('active', b === stBtn));
+    renderPhack(); return;
+  }
+  const vsBtn = e.target.closest('#vs-controls .btn');
+  if (vsBtn) {
+    vsMode = vsBtn.dataset.group;
+    document.querySelectorAll('#vs-controls .btn').forEach(b => b.classList.toggle('active', b === vsBtn));
+    renderVs(); return;
+  }
+  const bar = e.target.closest('.scan-bar');
+  if (bar && bar.dataset.cut) { document.getElementById('cut-slider').value = bar.dataset.cut; renderPhack(); return; }
+  if (e.target.id === 'btn-median') { document.getElementById('cut-slider').value = 60; renderPhack(); return; }
+  if (e.target.id === 'btn-bestp' && DATA) {
+    const valid = scanAllCutpoints(filteredRows()).filter(s => s.valid);
+    const best = valid.reduce((a, b) => b.p < a.p ? b : a, valid[0]);
+    document.getElementById('cut-slider').value = best.c; renderPhack(); return;
+  }
+  if (e.target.id === 'btn-worstp' && DATA) {
+    const valid = scanAllCutpoints(filteredRows()).filter(s => s.valid);
+    const worst = valid.reduce((a, b) => b.p > a.p ? b : a, valid[0]);
+    document.getElementById('cut-slider').value = worst.c; renderPhack(); return;
+  }
+});
+document.getElementById('cut-slider').addEventListener('input', renderPhack);
+</script>
+</body>
+</html>
