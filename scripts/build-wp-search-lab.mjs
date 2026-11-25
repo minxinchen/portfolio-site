@@ -1,0 +1,11 @@
+import { build } from 'esbuild';
+import { readFile, writeFile } from 'node:fs/promises';
+const root = new URL('../tools/wp-search-lab/', import.meta.url);
+const bundle = await build({ entryPoints: [new URL('src/app.js', root).pathname], bundle: true, write: false, minify: true, format: 'iife', target: ['es2020'], loader: { '.html': 'text', '.txt': 'text' }, legalComments: 'inline' });
+const script = bundle.outputFiles[0].text.replace(/<\/script/gi, '<\\/script');
+const css = await readFile(new URL('src/style.css', root), 'utf8');
+const shell = await readFile(new URL('src/shell.html', root), 'utf8');
+const projectLicense = await readFile(new URL('LICENSE', root), 'utf8');
+const output = shell.replace('<!--__PROJECT_LICENSE__-->', () => '<!--\n' + projectLicense + '\n-->').replace('/*__STYLE__*/', () => css).replace('/*__APP__*/', () => script);
+await writeFile(new URL('../../public/tools/wp-search-lab/index.html', root), output);
+console.log(`Built self-contained index.html (${Buffer.byteLength(output)} bytes)`);
