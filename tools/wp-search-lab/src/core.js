@@ -542,6 +542,7 @@ export function auditPage(input) {
   const contentLinks = tags('a', mainNodes);
   const brokenLinks = [];
   const genericLinks = [];
+  const internalTargets = new Set();
   let internalCount = 0, externalCount = 0, nofollowExternal = 0;
 
   for (const a of contentLinks) {
@@ -556,7 +557,8 @@ export function auditPage(input) {
     try {
       const target = new URL(rawHref, documentBase || page.url);
       if (target.origin === pageOrigin) {
-        if (normalizeUrl(target.href) !== page.url) internalCount++;
+        const normTarget = normalizeUrl(target.href);
+        if (normTarget !== page.url) { internalCount++; internalTargets.add(normTarget); }
         else if (target.hash && !allIds.has(decodeURIComponent(target.hash.slice(1)))) brokenLinks.push(a);
       } else if (target.protocol === 'http:' || target.protocol === 'https:') {
         externalCount++;
@@ -690,6 +692,9 @@ export function auditPage(input) {
     og: { title: ogTitle || titleText, description: ogDesc || descText, image: ogImageValid || '', hasExplicitOg: Boolean(ogTitle || ogDesc || ogImageValid) },
     wpStack,
     pageType,
+    h1: h1Text,
+    internalTargets: [...internalTargets],
+    mainTextSample: mainText.slice(0, 6000),
     outline: outline.slice(0, 30),
     stats: { words: mainWordCount, usedReadability, paragraphs: paragraphs.length, longParagraphs: longParagraphs.length, internalLinks: internalCount, externalLinks: externalCount, images: images.length, schemaTypes },
   };
@@ -704,6 +709,91 @@ export function auditPages(pages) {
   const urls = pages.map(p => normalizeUrl(p.url));
   if (new Set(urls).size !== urls.length) throw new Error('同一批不能有重複網址，請確認每個檔案的頁面網址。');
   return pages.map(auditPage);
+}
+
+const LINK_STOPWORDS = new Set(['首頁', '關於', '關於我們', '聯絡', '聯絡我們', '最新消息', '文章', '部落格', '產品', '服務', '介紹', '說明', '教學', '指南', 'home', 'about', 'contact', 'blog', 'news', 'page', 'post', 'with', 'from', 'that', 'this', 'your', 'more']);
+
+function extractTopicTerms(title, h1) {
+  const raw = `${h1 || ''} ${String(title || '').split(/[|｜–—\-]/)[0] || ''}`.trim();
+  const terms = new Set();
+  for (const seg of raw.split(/[\s,，、。？！?!:：；;（）()\[\]【】「」『』/／|｜\-–—]+/)) {
+    const clean = seg.trim();
+    if (!clean) continue;
+    const lower = clean.toLowerCase();
+    if (LINK_STOPWORDS.has(lower)) continue;
+    if (/[\u2E80-\u9FFF]/.test(clean)) {
+      if (clean.length >= 2 && clean.length <= 14) terms.add(clean);
+      if (clean.length > 4) {
+        for (let i = 0; i <= clean.length - 2; i += 2) {
+          const sub = clean.slice(i, i + 2);
+          if (sub.length === 2 && !LINK_STOPWORDS.has(sub)) terms.add(sub);
+        }
+      }
+    } else if (lower.length >= 4) {
+      terms.add(lower);
+    }
+  }
+  return [...terms].slice(0, 10);
+}
+
+export function analyzeSite(audits) {
+  if (!Array.isArray(audits) || !audits.length) return { pageRanking: [], duplicateTitles: [], duplicateDescriptions: [], linkSuggestions: [] };
+  const titleMap = new Map(), descMap = new Map();
+  const pageRanking = audits.map(a => {
+    const active = a.results.filter(r => r.category !== 'boundary');
+    const fails = active.filter(r => r.status === 'FAIL');
+    const warns = active.filter(r => r.status === 'WARNING');
+    const t = (a.preview?.title || '').trim();
+    const d = (a.preview?.description || '').trim();
+    if (t) titleMap.set(t, [...(titleMap.get(t) || []), a.page.url]);
+    if (d) descMap.set(d, [...(descMap.get(d) || []), a.page.url]);
+    return {
+      url: a.page.url,
+      title: t || a.preview?.h1 || a.page.url,
+      pageType: a.preview?.pageType || 'content',
+      failCount: fails.length,
+      warningCount: warns.length,
+      scoreWeight: fails.length * 3 + warns.length,
+      topIssues: [...fails, ...warns].slice(0, 3).map(r => r.name),
+    };
+  }).sort((a, b) => b.scoreWeight - a.scoreWeight);
+
+  const duplicateTitles = [...titleMap.entries()].filter(([, urls]) => urls.length > 1).map(([value, urls]) => ({ value, urls }));
+  const duplicateDescriptions = [...descMap.entries()].filter(([, urls]) => urls.length > 1).map(([value, urls]) => ({ value, urls }));
+
+  const linkSuggestions = [];
+  if (audits.length > 1) {
+    const targets = audits.map(a => ({
+      url: a.page.url,
+      title: a.preview?.h1 || (a.preview?.title || '').split(/[|｜–—\-]/)[0].trim() || a.page.url,
+      terms: extractTopicTerms(a.preview?.title, a.preview?.h1),
+    })).filter(t => t.terms.length > 0);
+
+    for (const src of audits) {
+      const existing = new Set(src.preview?.internalTargets || []);
+      const hay = `${src.preview?.title || ''} ${src.preview?.h1 || ''} ${src.preview?.mainTextSample || ''}`.toLowerCase();
+      if (!hay.trim()) continue;
+      const candidates = [];
+      for (const dst of targets) {
+        if (dst.url === src.page.url || existing.has(dst.url)) continue;
+        const matched = dst.terms.filter(term => hay.includes(term.toLowerCase()));
+        if (matched.length) candidates.push({ dst, matched });
+      }
+      candidates.sort((a, b) => b.matched.length - a.matched.length);
+      for (const c of candidates.slice(0, 2)) {
+        linkSuggestions.push({
+          fromUrl: src.page.url,
+          fromTitle: src.preview?.h1 || src.preview?.title || src.page.url,
+          toUrl: c.dst.url,
+          toTitle: c.dst.title,
+          matchedTerms: c.matched.slice(0, 3),
+          suggestedAnchor: c.dst.title.slice(0, 32),
+        });
+      }
+      if (linkSuggestions.length >= 12) break;
+    }
+  }
+  return { pageRanking, duplicateTitles, duplicateDescriptions, linkSuggestions };
 }
 
 export function actionable(audits) { return audits.flatMap(a => a.results).filter(r => ['FAIL', 'WARNING'].includes(r.status)); }

@@ -1,69 +1,7 @@
 // Public HTML retrieval only. No credentials, browser execution or arbitrary headers.
-const LIMIT = 2 * 1024 * 1024;
-const TIMEOUT = 15000;
-const redirects = new Set([301, 302, 303, 307, 308]);
-const json = (data, status = 200) => new Response(JSON.stringify(data), { status, headers: {
-  'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store',
-  'X-Content-Type-Options': 'nosniff', 'Content-Security-Policy': "default-src 'none'",
-} });
+import { LIMIT, TIMEOUT, redirects, json, publicUrl, isPublicAddress, checkDns, limitedBytes, validateSameOriginPost, checkRateLimit } from '../_lib/net.js';
 
-export function publicUrl(value) {
-  if (typeof value !== 'string' || value.length > 2000) throw new Error('請輸入有效的公開網頁網址。');
-  let url;
-  try { url = new URL(value); } catch { throw new Error('請輸入包含 https:// 的完整網址。'); }
-  const host = url.hostname.toLowerCase();
-  if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password || url.port ||
-      !host.includes('.') || !/^[a-z0-9.-]+$/.test(host) || /^[\d.]+$/.test(host) ||
-      /(?:^|\.)(localhost|local|internal|lan|home|test|invalid|example|onion)$/.test(host) || host.endsWith('.')) {
-    throw new Error('僅接受一般 HTTP／HTTPS 公開網域，不支援內網、IP、登入資訊或自訂連接埠。');
-  }
-  url.hash = '';
-  return url;
-}
-
-export function isPublicAddress(ip) {
-  if (ip.includes(':')) {
-    // Only global IPv6 unicast; reject documentation/transition ranges as well.
-    return /^[23][0-9a-f]{3}:/i.test(ip) && !/^(2001:(?:0:|db8:|2:|10:|20:)|2002:|3fff:)/i.test(ip);
-  }
-  const a = ip.split('.').map(Number);
-  if (a.length !== 4 || a.some(n => !Number.isInteger(n) || n < 0 || n > 255)) return false;
-  return !(a[0] === 0 || a[0] === 10 || a[0] === 127 || a[0] >= 224 ||
-    (a[0] === 100 && a[1] >= 64 && a[1] <= 127) || (a[0] === 169 && a[1] === 254) ||
-    (a[0] === 172 && a[1] >= 16 && a[1] <= 31) || (a[0] === 192 && (a[1] === 168 || a[1] === 0 || a[1] === 2)) ||
-    (a[0] === 198 && (a[1] === 18 || a[1] === 19 || a[1] === 51)) || (a[0] === 203 && a[1] === 0 && a[2] === 113));
-}
-
-async function checkDns(host, fetcher, signal) {
-  const answers = await Promise.all(['A', 'AAAA'].map(async type => {
-    const response = await fetcher(`https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(host)}&type=${type}`, {
-      headers: { Accept: 'application/dns-json' }, signal,
-    });
-    if (!response.ok) throw new Error('暫時無法確認網域，請稍後重試。');
-    const data = await response.json();
-    if (data.Status !== 0) throw new Error('找不到這個公開網域，請檢查網址。');
-    return (data.Answer || []).filter(a => a.type === 1 || a.type === 28).map(a => a.data);
-  }));
-  const addresses = answers.flat();
-  if (!addresses.length || addresses.some(ip => !isPublicAddress(ip))) throw new Error('此網址未解析至可接受的公開網路位址。');
-}
-
-async function limitedBytes(response, limit) {
-  if (Number(response.headers.get('content-length')) > limit) {
-    await response.body?.cancel(); throw new Error('頁面超過 2 MB 上限，尚未執行檢測。');
-  }
-  if (!response.body) throw new Error('網站沒有回傳頁面內容。');
-  const reader = response.body.getReader(); const chunks = []; let size = 0;
-  while (true) {
-    const { value, done } = await reader.read(); if (done) break;
-    size += value.byteLength;
-    if (size > limit) { await reader.cancel(); throw new Error('頁面超過 2 MB 上限，尚未執行檢測。'); }
-    chunks.push(value);
-  }
-  const bytes = new Uint8Array(size); let at = 0;
-  for (const part of chunks) { bytes.set(part, at); at += part.length; }
-  return bytes;
-}
+export { publicUrl, isPublicAddress };
 
 export async function retrievePage(value, fetcher = fetch, timeoutMs = TIMEOUT) {
   let url = publicUrl(value); const requestedUrl = url.href;
@@ -73,7 +11,7 @@ export async function retrievePage(value, fetcher = fetch, timeoutMs = TIMEOUT) 
       await checkDns(url.hostname, fetcher, controller.signal);
       const response = await fetcher(url.href, {
         method: 'GET', redirect: 'manual', signal: controller.signal, credentials: 'omit', cache: 'no-store',
-        headers: { Accept: 'text/html,application/xhtml+xml', 'User-Agent': 'WP-Search-Lab/0.2 (+https://portfolio-site-1b8.pages.dev/projects/wp-search-lab.html)' },
+        headers: { Accept: 'text/html,application/xhtml+xml', 'User-Agent': 'WP-Search-Lab/0.4 (+https://portfolio-site-1b8.pages.dev/projects/wp-search-lab.html)' },
       });
       if (redirects.has(response.status)) {
         const location = response.headers.get('location'); await response.body?.cancel();
@@ -98,7 +36,7 @@ export async function retrievePage(value, fetcher = fetch, timeoutMs = TIMEOUT) 
       try {
         const robotsRes = await fetcher(robotsUrl, {
           method: 'GET', redirect: 'manual', signal: controller.signal, credentials: 'omit', cache: 'no-store',
-          headers: { Accept: 'text/plain,*/*;q=0.1', 'User-Agent': 'WP-Search-Lab/0.3 (+https://portfolio-site-1b8.pages.dev/projects/wp-search-lab.html)' },
+          headers: { Accept: 'text/plain,*/*;q=0.1', 'User-Agent': 'WP-Search-Lab/0.4 (+https://portfolio-site-1b8.pages.dev/projects/wp-search-lab.html)' },
         });
         const rMime = robotsRes.headers.get('content-type') || '';
         if (robotsRes.ok && !/text\/html/i.test(rMime)) {
@@ -120,11 +58,11 @@ export async function retrievePage(value, fetcher = fetch, timeoutMs = TIMEOUT) 
 }
 
 export async function onRequest({ request }) {
-  if (request.method !== 'POST') return json({ error: '請從 WP Search Lab 輸入網址。' }, 405);
-  if (request.headers.get('origin') !== new URL(request.url).origin) return json({ error: '請從本站工作台發起檢測。' }, 403);
-  if (!(request.headers.get('content-type') || '').startsWith('application/json')) return json({ error: '請使用 JSON 請求。' }, 415);
+  const rejected = validateSameOriginPost(request);
+  if (rejected) return rejected;
+  const limit = checkRateLimit(request, { key: 'inspect-page', max: 30, windowMs: 60_000 });
+  if (!limit.ok) return json({ error: `請求過於頻繁，請在 ${limit.retryAfterSec} 秒後再試。` }, 429, { 'Retry-After': String(limit.retryAfterSec) });
   try {
-    // Bound the input stream before parsing, including requests without Content-Length.
     const bytes = await limitedBytes(request, 4096);
     let data; try { data = JSON.parse(new TextDecoder().decode(bytes)); } catch { return json({ error: '網址資料格式不正確。' }, 400); }
     const page = await retrievePage(data.url);
