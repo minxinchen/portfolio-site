@@ -1,4 +1,4 @@
-import { RULE_VERSION, RULES, LIMITS, STATUS_LABELS, escapeHtml, normalizeUrl, createSnapshot, auditPages, initialPlan, compilePrompt, compareAudits, reportHtml } from './core.js';
+import { RULE_VERSION, RULES, LIMITS, STATUS_LABELS, CATEGORY_LABELS, escapeHtml, normalizeUrl, createSnapshot, auditPages, initialPlan, compilePrompt, compileSinglePrompt, compareAudits, reportHtml } from './core.js';
 import sampleBefore from '../tests/fixtures/product-before.html';
 import sampleAfter from '../tests/fixtures/product-after.html';
 import parse5License from '../licenses/parse5.txt';
@@ -9,7 +9,8 @@ const main = document.querySelector('#main');
 const emptyState = () => ({ view: 'start', target: 'before', drafts: { before: [], after: [] }, before: [], after: [], plan: [], history: [], filter: 'issues', tool: 'ChatGPT', scope: '只產出修改建議與草稿；未經我確認，不發佈正式網站。', notes: '', busy: false });
 let state = emptyState();
 const sampleUrl = 'https://example.test/products/p-100';
-const label = status => `<span class="status ${status}">${e(status)} · ${e(STATUS_LABELS[status])}</span>`;
+const label = status => `<span class="status ${status}">${e(STATUS_LABELS[status] || status)}</span>`;
+
 function notify(message, error = false) {
   const box = document.querySelector('#notice'); box.textContent = message; box.classList.toggle('error', error); box.hidden = false;
 }
@@ -26,94 +27,146 @@ function render() {
   const views = { start: renderStart, results: renderResults, plan: renderPlan, prompt: renderPrompt, verify: renderVerify, help: renderHelp };
   main.innerHTML = (views[state.view] || renderStart)();
 }
+
 function importPanel(target) {
   const drafts = state.drafts[target], after = target === 'after';
-  return `<section class="panel" id="import-panel"><h2>${after ? '重新檢查線上的同一個頁面' : '輸入網址，直接檢查線上頁面'}</h2><p class="panel-subtitle">不必下載 HTML。取得公開頁面後，立即分析並顯示證據。</p>
-  <div class="url-check"><label class="field" for="fetch-url">要檢查的網頁網址<input id="fetch-url" type="url" placeholder="https://你的網站.com/頁面/" value="${after && state.before[0] ? e(state.before[0].page.url) : ''}" autocomplete="url"></label><div class="check-row"><label><input id="fetch-product" type="checkbox" ${after && state.before[0]?.page.context.product ? 'checked' : ''}>這是產品頁</label><label><input id="fetch-multilingual" type="checkbox" ${after && state.before[0]?.page.context.multilingual ? 'checked' : ''}>多語系頁面</label></div><button id="fetch-page" data-target="${target}" class="primary" ${!after && state.before.length ? 'disabled' : ''}>${after ? '重新讀取並比較' : '檢查這個網頁 →'}</button><p class="fetch-note">讀取公開內容，不需網站帳密。網址會交由本站服務擷取；不會修改網站。僅分析伺服器回傳的 HTML，不執行頁面 JavaScript。</p></div>
-  <details class="advanced-import"><summary>進階：匯入已儲存的 HTML 檔案</summary><div class="upload-zone"><p>可在離線時使用，或比較手動保存的版本。每頁 2 MB，每批最多 20 頁、合計 20 MB。</p><label class="field" for="files">選取網頁（可多選）<input id="files" type="file" accept=".html,.htm,text/html" multiple data-target="${target}"></label></div></details>
-  <details><summary>進階：貼上 HTML 原始碼</summary><div><label class="field" for="page-url">這份原始碼的完整頁面網址<input id="page-url" type="url" placeholder="https://your-site.com/product/" autocomplete="off"></label><label class="field" for="source-html">HTML 原始碼<textarea id="source-html" rows="6" placeholder="貼上你取得的 HTML；其中的 Script 不會執行。" spellcheck="false"></textarea></label><button id="add-source" data-target="${target}" class="quiet">加入待檢測頁面</button></div></details>
-  ${after ? '<div class="soft">請使用與改善前相同的網址、來源方式及頁面類型。未提供的頁面、UNKNOWN 或不同設定，都不會被當成已修正。</div>' : ''}
-  <div id="draft-list">${drafts.map((d, i) => `<div class="draft-row"><div><small>${e(d.name || d.sourceKind)} · ${(new TextEncoder().encode(d.html).byteLength / 1024).toFixed(1)} KB · ${e(d.sourceKind)}</small><label class="field" for="draft-url-${i}">確認這份網頁的原始網址<input id="draft-url-${i}" data-draft-url="${i}" data-target="${target}" type="url" value="${e(d.url)}" placeholder="https://your-site.com/product/" required></label><div class="check-row"><label><input type="checkbox" data-draft-context="product" data-index="${i}" data-target="${target}" ${d.context.product ? 'checked' : ''}>產品頁</label><label><input type="checkbox" data-draft-context="multilingual" data-index="${i}" data-target="${target}" ${d.context.multilingual ? 'checked' : ''}>多語系頁面</label></div></div><button class="quiet" data-remove-draft="${i}" data-target="${target}" aria-label="移除 ${e(d.name || '頁面')} ">移除</button></div>`).join('')}</div>
-  <div class="actions" ${drafts.length ? '' : 'hidden'}><button class="primary" id="${after ? 'run-after' : 'run-audit'}" ${!drafts.length || (!after && state.before.length) ? 'disabled' : ''}>${after ? '重新檢測並比較' : '開始檢測'}${drafts.length ? `（${drafts.length} 頁）` : ''}</button><span class="muted">${!after && state.before.length ? '改善前已保留；要換網站請先匯出，再按「開始新檢測」。' : '請先確認每一頁的原始網址。'}</span></div></section>`;
+  return `<section class="panel" id="import-panel"><h2>${after ? '重新檢查線上的同一個頁面' : '貼上網址，馬上檢查'}</h2><p class="panel-subtitle">不需登入 WordPress、不用懂程式碼。抓回網頁後會告訴你最該先改的 3 件事。</p>
+  <div class="url-check"><label class="field" for="fetch-url">要檢查的網頁網址<input id="fetch-url" type="url" placeholder="https://你的網站.com/文章或頁面/" value="${after && state.before[0] ? e(state.before[0].page.url) : ''}" autocomplete="url"></label><div class="check-row"><label><input id="fetch-product" type="checkbox" ${after && state.before[0]?.page.context.product ? 'checked' : ''}>這是產品／商品頁（加測規格表與詢價入口）</label><label><input id="fetch-multilingual" type="checkbox" ${after && state.before[0]?.page.context.multilingual ? 'checked' : ''}>多語系頁面</label></div><button id="fetch-page" data-target="${target}" class="primary" ${!after && state.before.length ? 'disabled' : ''}>${after ? '重新讀取並比較' : '開始檢查這個網頁 →'}</button><p class="fetch-note">僅讀取公開網頁，不需帳號密碼、不會修改你的網站。</p></div>
+  <details class="advanced-import"><summary>其他方式：上傳已儲存的 HTML 檔案或貼上原始碼</summary><div class="upload-zone"><p>離線使用或一次檢查多頁（最多 20 頁、每頁 2 MB）。</p><label class="field" for="files">選取網頁檔案（.html / .htm）<input id="files" type="file" accept=".html,.htm,text/html" multiple data-target="${target}"></label><hr class="divider"><label class="field" for="page-url">或直接貼上原始碼（請先填入該頁網址）<input id="page-url" type="url" placeholder="https://your-site.com/page/" autocomplete="off"></label><label class="field" for="source-html">HTML 原始碼<textarea id="source-html" rows="5" placeholder="貼上網頁原始碼（其中的 Script 不會執行）。" spellcheck="false"></textarea></label><button id="add-source" data-target="${target}" class="quiet">加入待檢測清單</button></div></details>
+  ${after ? '<div class="soft">請使用與改善前相同的網址與頁面類型，才能準確比對前後差異。</div>' : ''}
+  <div id="draft-list">${drafts.map((d, i) => `<div class="draft-row"><div><small>${e(d.name || d.sourceKind)} · ${(new TextEncoder().encode(d.html).byteLength / 1024).toFixed(1)} KB</small><label class="field" for="draft-url-${i}">確認這份網頁的原始網址<input id="draft-url-${i}" data-draft-url="${i}" data-target="${target}" type="url" value="${e(d.url)}" placeholder="https://your-site.com/page/" required></label><div class="check-row"><label><input type="checkbox" data-draft-context="product" data-index="${i}" data-target="${target}" ${d.context.product ? 'checked' : ''}>產品頁</label><label><input type="checkbox" data-draft-context="multilingual" data-index="${i}" data-target="${target}" ${d.context.multilingual ? 'checked' : ''}>多語系頁面</label></div></div><button class="quiet" data-remove-draft="${i}" data-target="${target}" aria-label="移除 ${e(d.name || '頁面')}">移除</button></div>`).join('')}</div>
+  <div class="actions" ${drafts.length ? '' : 'hidden'}><button class="primary" id="${after ? 'run-after' : 'run-audit'}" ${!drafts.length || (!after && state.before.length) ? 'disabled' : ''}>${after ? '重新檢測並比較' : '開始檢測'}${drafts.length ? `（${drafts.length} 頁）` : ''}</button><span class="muted">${!after && state.before.length ? '要換網站請先按右上角「開始新檢測」。' : '確認網址後即可檢測。'}</span></div></section>`;
 }
+
 function renderStart() {
-  return intro('01 / 開始檢測', '輸入網址，找出網站的下一步。', '直接檢查已上線網頁的 SEO／AIO 結構，查看問題證據、安排改善，再重新讀取網站驗證結果。') +
-  `<div class="steps"><div class="step"><span class="step-num">STEP 1</span><b>輸入公開網址</b><small>不用登入 WordPress</small></div><div class="step"><span class="step-num">STEP 2</span><b>決定怎麼改善</b><small>看證據，再安排優先順序</small></div><div class="step"><span class="step-num">STEP 3</span><b>重新驗證</b><small>同樣條件，比較前後差異</small></div></div><div class="two-col"><div>${importPanel('before')}</div><div><section class="panel sample-panel"><span class="sample-tag">可操作範例 · 虛構測試資料</span><h2>先用一頁產品，走完整個流程。</h2><p>示範工業泵浦頁面缺少標題、摘要和詢價入口。檢測結果由實際 HTML 計算，不是預填分數。</p><button id="sample-before" class="primary" ${state.before.length ? 'disabled' : ''}>體驗範例檢測</button><div class="soft">範例網址 example.test 與產品均為虛構。修正後範例只示範技術差異，不是正式網站成效。</div></section><section class="panel"><h2>這裡會幫你做到什麼？</h2><ul class="help-list"><li>找到靜態 HTML 中可確認的問題與原始行號。</li><li>了解在 WordPress 哪裡處理、注意什麼。</li><li>選擇與調整任務，產出可複製的 AI 指令。</li><li>保留改善前的證據，再比較新版網頁。</li></ul><p class="panel-subtitle">不提供全站爬蟲、排名分數或 AI 引用率預測。動態內容、HTTP 標頭與工程規格真實性會明確標記為未知。</p><button class="text-button" data-nav="help">查看能力與使用說明</button></section></div></div>`;
+  return intro('01 / 開始檢測', '輸入網址，馬上知道網頁該從哪裡改。', '依 Google 搜尋指南、AI 摘要（AIO）與可閱讀性檢查 WordPress 頁面，直接告訴你在後台哪裡下手。') +
+  `<div class="steps"><div class="step"><span class="step-num">STEP 1</span><b>貼上網址</b><small>不用登入後台或寫程式</small></div><div class="step"><span class="step-num">STEP 2</span><b>先改最重要的 3 件事</b><small>看 Google 預覽與白話步驟</small></div><div class="step"><span class="step-num">STEP 3</span><b>改完再測一次</b><small>確認修正前後的實際變化</small></div></div><div class="two-col"><div>${importPanel('before')}</div><div><section class="panel sample-panel"><span class="sample-tag">免網址試玩 · 示範資料</span><h2>還沒準備網址？先看示範。</h2><p>用一頁有常見問題的範例頁面，直接體驗「Google 搜尋預覽 → 優先修正清單 → 一鍵給 AI 改寫 → 前後比對」。</p><button id="sample-before" class="primary" ${state.before.length ? 'disabled' : ''}>載入示範頁面</button></section><section class="panel"><h2>會幫你檢查哪些重點？</h2><ul class="help-list"><li><b>Google 搜尋呈現：</b>標題與簡介字數、有沒有誤設不收錄或不給 AI 顯示摘要。</li><li><b>AI 摘要與結構：</b>主標題 H1、H2／H3 大綱層級、Schema 類型、作者與更新日期。</li><li><b>內外鏈品質：</b>抓出「點這裡」空泛連結、無效假連結、以及缺少站內延伸閱讀。</li><li><b>手機可閱讀性：</b>直接揪出超過 200 字的文字牆段落，和缺少說明的圖片。</li></ul><button class="text-button" data-nav="help">查看完整說明與能力範圍</button></section></div></div>`;
 }
-function renderStats(audits) {
-  const findings = audits.flatMap(a => a.results);
-  return `<div class="stats">${Object.entries(STATUS_LABELS).map(([status, title]) => `<div class="stat"><span class="status-word">${status === 'NOT_APPLICABLE' ? 'N/A' : status}</span><strong>${findings.filter(r => r.status === status).length}</strong><span>${title}</span></div>`).join('')}</div>`;
+
+function renderDimensionSummary(audits) {
+  const all = audits.flatMap(a => a.results).filter(r => r.category !== 'boundary' && r.status !== 'NOT_APPLICABLE');
+  const groups = [
+    { key: 'seo', title: 'Google SEO 基礎', cats: ['seo'] },
+    { key: 'aio', title: 'AIO 與內容結構', cats: ['aio', 'product'] },
+    { key: 'read', title: '閱讀體驗與內外鏈', cats: ['readability', 'links'] },
+  ];
+  return `<div class="dim-grid">${groups.map(g => {
+    const items = all.filter(r => g.cats.includes(r.category));
+    const issues = items.filter(r => r.status === 'FAIL' || r.status === 'WARNING').length;
+    const passed = items.filter(r => r.status === 'PASS').length;
+    const tone = issues === 0 ? 'good' : items.some(r => r.status === 'FAIL') ? 'bad' : 'warn';
+    return `<div class="dim-card ${tone}"><span class="dim-label">${g.title}</span><strong>${issues === 0 ? '狀態良好' : `${issues} 項待改善`}</strong><small>${passed} / ${items.length} 項符合建議</small></div>`;
+  }).join('')}</div>`;
 }
-function guidance(r) {
-  return `<dl class="guide"><dt>為什麼值得處理</dt><dd>${e(r.advice.why)}</dd><dt>適用條件</dt><dd>${e(r.advice.conditions)}</dd><dt>到 WordPress 哪裡處理</dt><dd>${e(r.advice.where)}</dd><dt>自行改善</dt><dd><ol>${r.advice.steps.map(s => `<li>${e(s)}</li>`).join('')}</ol></dd><dt>注意事項</dt><dd>${e(r.advice.caution)}</dd><dt>備份與回滾</dt><dd>${e(r.advice.rollback)}</dd><dt>如何驗收</dt><dd>${e(r.advice.acceptance)}</dd><dt>依據</dt><dd>${e(r.standard)} · <a href="${e(r.source)}" target="_blank" rel="noopener noreferrer">開啟參考來源 ↗</a></dd></dl>`;
+
+function renderVisualOverview(audit) {
+  if (!audit?.preview) return '';
+  const p = audit.preview;
+  let hostPath = p.url;
+  try { const u = new URL(p.url); hostPath = u.host + (u.pathname === '/' ? '' : u.pathname.replace(/\/$/, '').split('/').join(' › ')); } catch {}
+  const titleWarn = !p.title ? '缺少標題' : p.titleUnits > 66 ? '偏長，可能被截斷' : '';
+  const descWarn = !p.description ? '缺少簡介（Google 將自行抓取內文）' : p.descUnits > 170 ? '偏長，後半段可能被截斷' : '';
+  const outlineHtml = p.outline.length
+    ? `<ul class="outline-list">${p.outline.slice(0, 12).map(h => `<li class="outline-item h${Math.min(h.level, 4)}"><span>H${h.level}</span>${e(h.text)}</li>`).join('')}${p.outline.length > 12 ? `<li class="outline-more">…還有 ${p.outline.length - 12} 個標題</li>` : ''}</ul>`
+    : '<p class="panel-subtitle">這頁目前找不到 H1／H2 標題，建議幫文章加上主標題與段落小標。</p>';
+  const s = p.stats;
+  return `<div class="two-col visual-overview"><section class="panel"><h2>Google 搜尋結果模擬預覽</h2><div class="serp-card"><div class="serp-url">${e(hostPath)}</div><div class="serp-title ${!p.title ? 'is-missing' : ''}">${e(p.title || '（未設定頁面搜尋標題）')}</div><div class="serp-desc ${!p.description ? 'is-missing' : ''}">${e(p.description || '未填寫搜尋簡介，Google 會自動從頁面正文節錄片段顯示。')}</div></div>${(titleWarn || descWarn) ? `<div class="serp-hints">${titleWarn ? `<span class="serp-warn">標題：${titleWarn}</span>` : ''}${descWarn ? `<span class="serp-warn">簡介：${descWarn}</span>` : ''}</div>` : '<p class="panel-subtitle" style="margin:10px 0 0">標題與簡介長度皆在理想顯示範圍內。</p>'}</section><section class="panel"><h2>內容結構與文章大綱</h2><div class="mini-metrics"><span>正文約 <b>${s.words}</b> 字</span><span>站內連結 <b>${s.internalLinks}</b></span><span>站外連結 <b>${s.externalLinks}</b></span><span>圖片 <b>${s.images}</b> 張</span>${s.schemaTypes.length ? `<span>Schema：<b>${e(s.schemaTypes.slice(0, 3).join('、'))}</b></span>` : '<span>Schema：<b>未偵測到</b></span>'}</div>${outlineHtml}</section></div>`;
 }
-function findingCard(r) {
+
+function findingCard(r, expanded = false) {
   const task = state.plan.find(t => t.findingKey === r.key);
-  return `<article class="finding"><div class="finding-header"><div><h3>${e(r.name)}<span class="severity">優先程度 ${e(r.severity)}</span></h3><div class="page-url">${e(r.pageUrl)}</div></div>${label(r.status)}</div><p class="detail">${e(r.detail)}</p><details><summary>查看原始證據${r.evidence.line ? ' · 第 ' + r.evidence.line + ' 行' : ' · 全文檢查'}</summary><div><pre class="evidence">${e(r.evidence.excerpt)}</pre><p class="method">${e(r.evidence.method)} · 符合節點 ${r.evidence.matchedCount}</p></div></details><details><summary>如何處理與驗收</summary><div>${guidance(r)}</div></details>${task ? `<div class="finding-actions"><button data-toggle-task="${e(r.key)}" class="quiet">${task.included ? '已加入計畫 · 改為暫緩' : '加入改善計畫'}</button><button data-ai-task="${e(r.key)}" class="text-button">請 AI 協助這個問題</button></div>` : ''}</article>`;
+  const isIssue = r.status === 'FAIL' || r.status === 'WARNING';
+  const guideBlock = `<div class="plain-guide"><p><strong>為什麼要改：</strong>${e(r.advice.why)}</p><p><strong>在 WordPress 哪裡做：</strong>${e(r.advice.where)}</p><ol class="step-list">${r.advice.steps.map(s => `<li>${e(s)}</li>`).join('')}</ol></div>`;
+  return `<article class="finding ${expanded ? 'priority-card' : ''}"><div class="finding-header"><div><span class="cat-tag">${e(CATEGORY_LABELS[r.category] || '')}</span><h3>${e(r.name)}</h3>${state.before.length > 1 ? `<div class="page-url">${e(r.pageUrl)}</div>` : ''}</div>${label(r.status)}</div><p class="detail">${e(r.detail)}</p>${expanded ? guideBlock : `<details><summary>怎麼改？（WordPress 操作步驟）</summary>${guideBlock}</details>`}<details class="tech-details"><summary>查看原始 HTML 證據${r.evidence.line ? ' · 第 ' + r.evidence.line + ' 行' : ''} · ${e(r.standard)}</summary><div><pre class="evidence">${e(r.evidence.excerpt)}</pre><p class="method"><a href="${e(r.source)}" target="_blank" rel="noopener noreferrer">查看 Google 官方說明 ↗</a></p></div></details>${isIssue ? `<div class="finding-actions"><button data-copy-single="${e(r.key)}" class="primary-soft">複製這題給 AI 幫我改寫</button>${task ? `<button data-toggle-task="${e(r.key)}" class="quiet">${task.included ? '✓ 已列入計畫（點此暫緩）' : '加入改善計畫'}</button>` : ''}</div>` : ''}</article>`;
 }
+
 function renderResults() {
-  if (!state.before.length) return empty('先帶入一份網頁', '完成檢測後，你會在這裡看到問題、證據與可執行的指引。');
-  const results = state.before.flatMap(a => a.results), priority = { '高': 0, '中': 1, '資訊': 2 };
-  const filtered = results.filter(r => state.filter === 'all' || (state.filter === 'issues' ? ['FAIL', 'WARNING'].includes(r.status) : r.status === state.filter)).sort((a, b) => priority[a.severity] - priority[b.severity]);
-  return intro('02 / 理解問題', '先看有證據的問題，再決定怎麼做。', `已分析 ${state.before.length} 頁提供的靜態 HTML。這是單頁證據檢查，不是全站健康分數；未知項目不算通過。`) + renderStats(state.before) +
-  `<div class="filterbar"><label class="field" for="result-filter">顯示結果<select id="result-filter">${[['issues', '需要處理的問題'], ['all', '全部檢查'], ...Object.entries(STATUS_LABELS).map(([a,b]) => [a,b])].map(([value, text]) => `<option value="${value}" ${state.filter === value ? 'selected' : ''}>${text}</option>`).join('')}</select></label><div class="actions"><button class="quiet" id="export-report">匯出完整報告</button><button class="primary" data-nav="plan">安排改善計畫 →</button></div></div><div class="findings" id="results">${filtered.length ? filtered.map(findingCard).join('') : '<div class="empty"><h2>這個分類沒有結果</h2><p>也請查看 UNKNOWN 的能力限制，未發現問題不等於全站通過。</p></div>'}</div>`;
+  if (!state.before.length) return empty('先輸入一個網址開始檢測', '完成檢測後，這裡會顯示 Google 搜尋預覽、文章大綱與最優先修改清單。');
+  const allResults = state.before.flatMap(a => a.results).filter(r => r.category !== 'boundary');
+  const priority = { '高': 0, '中': 1, '資訊': 2 };
+  const statusWeight = { FAIL: 0, WARNING: 1, UNKNOWN: 2, PASS: 3, NOT_APPLICABLE: 4 };
+  const sortedIssues = allResults.filter(r => ['FAIL', 'WARNING'].includes(r.status)).sort((a, b) => (statusWeight[a.status] - statusWeight[b.status]) || (priority[a.severity] - priority[b.severity]));
+  const top3 = sortedIssues.slice(0, 3);
+  const topKeys = new Set(top3.map(r => r.key));
+  const filtered = allResults.filter(r => {
+    if (state.filter === 'issues') return ['FAIL', 'WARNING'].includes(r.status) && !topKeys.has(r.key);
+    if (state.filter === 'all') return true;
+    return r.status === state.filter;
+  }).sort((a, b) => (statusWeight[a.status] - statusWeight[b.status]) || (priority[a.severity] - priority[b.severity]));
+
+  const summaryText = sortedIssues.length
+    ? `找到 ${sortedIssues.length} 個可以改善的地方。先從下面「最優先的 ${top3.length} 件事」下手，改完再重新驗證即可。`
+    : '這頁的基礎 SEO、結構與閱讀項目都符合建議！可到頁尾用 Google 官方工具做進階確認。';
+
+  return intro('02 / 檢測結果與下手處', sortedIssues.length ? `先改這 ${top3.length} 件事，效果最明顯。` : '這頁的結構與基礎體質很不錯！', summaryText) +
+  renderDimensionSummary(state.before) +
+  renderVisualOverview(state.before[0]) +
+  (top3.length && state.filter === 'issues' ? `<section class="top-section"><div class="section-head"><h2>優先處理（建議先從這裡下手）</h2><div class="actions" style="margin:0"><button class="quiet" id="export-report">匯出報告</button><button class="primary" data-nav="plan">整理成改善清單 →</button></div></div><div class="findings">${top3.map(r => findingCard(r, true)).join('')}</div></section>` : '') +
+  `<div class="filterbar"><label class="field" for="result-filter" style="margin:0">查看其他項目<select id="result-filter">${[['issues', `其餘待改善項目（${Math.max(0, sortedIssues.length - top3.length)}）`], ['PASS', `已符合建議（${allResults.filter(r => r.status === 'PASS').length}）`], ['all', `全部項目（${allResults.length}）`], ['FAIL', '僅看需要修正'], ['WARNING', '僅看建議優化']].map(([value, text]) => `<option value="${value}" ${state.filter === value ? 'selected' : ''}>${text}</option>`).join('')}</select></label>${(!top3.length || state.filter !== 'issues') ? `<div class="actions" style="margin:0"><button class="quiet" id="export-report">匯出報告</button><button class="primary" data-nav="plan">整理成改善清單 →</button></div>` : ''}</div>` +
+  `<div class="findings" id="results">${filtered.length ? filtered.map(r => findingCard(r, false)).join('') : '<div class="empty"><h2>這個分類沒有其他項目</h2><p>你可以切換上方篩選查看「已符合建議」，或直接前往下一步整理改善計畫。</p></div>'}</div>` +
+  `<section class="panel external-box"><h2>修改前提醒 & 進一步外部檢查</h2><p class="panel-subtitle">修改 WordPress 前建議先保留原文字或用「修訂版本」備份。此外，靜態 HTML 無法確認實際 Google 收錄、速度與全站 Sitemap，建議搭配以下免費官方工具：</p><div class="actions"><a class="quiet-link" href="https://search.google.com/search-console" target="_blank" rel="noopener noreferrer">Google Search Console ↗</a><a class="quiet-link" href="https://search.google.com/test/rich-results" target="_blank" rel="noopener noreferrer">複合式搜尋結果測試 ↗</a><a class="quiet-link" href="https://pagespeed.web.dev/" target="_blank" rel="noopener noreferrer">PageSpeed 手機速度 ↗</a></div></section>`;
 }
+
 function renderPlan() {
-  if (!state.before.length) return empty('改善計畫從檢測證據開始', '先完成一次檢測，我們會依問題與優先程度整理可調整的任務。');
-  if (!state.plan.length) return empty('目前沒有 FAIL 或 WARNING 任務', '仍可回到檢測結果，查看 UNKNOWN 項目需要哪些外部驗證。', 'results');
-  return intro('03 / 安排改善', '把這次要做的事，排成一份計畫。', '預設依優先程度排列。你可以暫緩任務、調整順序，並補充適用條件。這些選擇會帶入 AI 指令與匯出報告。') +
-  `<section class="panel" id="plan"><div class="filterbar"><h2>本次處理 ${state.plan.filter(t => t.included).length} / ${state.plan.length} 項</h2><button class="primary" data-nav="prompt">產生 AI 改善指令 →</button></div>${state.plan.map((task, i) => `<article class="task ${task.included ? '' : 'excluded'}"><div class="task-head"><span class="task-order">${String(i + 1).padStart(2,'0')}</span><input type="checkbox" data-plan-check="${i}" ${task.included ? 'checked' : ''} aria-label="處理 ${e(task.finding.name)}"><h3>${e(task.finding.name)}</h3><div class="task-controls"><button data-move="${i}" data-direction="-1" ${i === 0 ? 'disabled' : ''} aria-label="上移 ${e(task.finding.name)}">↑</button><button data-move="${i}" data-direction="1" ${i === state.plan.length - 1 ? 'disabled' : ''} aria-label="下移 ${e(task.finding.name)}">↓</button></div></div><p class="page-url">${e(task.finding.pageUrl)} · 優先程度 ${e(task.finding.severity)} · ${task.included ? '本次處理' : '暫緩處理'}</p><p>${e(task.finding.advice.why)}</p><label class="field" for="task-note-${i}">修改這項任務的要求<textarea id="task-note-${i}" data-task-note="${i}" rows="2" placeholder="例如：保留現有品牌名稱；先提供草稿，不直接發佈。">${e(task.note)}</textarea></label><details><summary>操作位置、適用條件與驗收</summary><div>${guidance(task.finding)}</div></details></article>`).join('')}<div class="actions"><button class="quiet" data-nav="results">回到證據</button><button class="primary" data-nav="prompt">請 AI 協助 →</button></div></section>`;
+  if (!state.before.length) return empty('改善計畫從檢測結果開始', '先貼上網址完成一次檢測，我們會依重要程度幫你排好清單。');
+  if (!state.plan.length) return empty('目前沒有待改善任務', '這頁的基礎項目都已符合建議，可以回到結果頁查看詳情。', 'results');
+  return intro('03 / 安排改善', '勾選這次要改的項目。', '你可以取消暫時不想改的項目、調整順序，或寫下備註（例如「保留品牌名」），這些都會自動帶入下一步的 AI 指令。') +
+  `<section class="panel" id="plan"><div class="filterbar"><h2>本次處理 ${state.plan.filter(t => t.included).length} / ${state.plan.length} 項</h2><button class="primary" data-nav="prompt">產生完整 AI 指令 →</button></div>${state.plan.map((task, i) => `<article class="task ${task.included ? '' : 'excluded'}"><div class="task-head"><span class="task-order">${String(i + 1).padStart(2,'0')}</span><input type="checkbox" data-plan-check="${i}" ${task.included ? 'checked' : ''} aria-label="處理 ${e(task.finding.name)}"><h3>${e(task.finding.name)}</h3><div class="task-controls"><button data-move="${i}" data-direction="-1" ${i === 0 ? 'disabled' : ''} aria-label="上移 ${e(task.finding.name)}">↑</button><button data-move="${i}" data-direction="1" ${i === state.plan.length - 1 ? 'disabled' : ''} aria-label="下移 ${e(task.finding.name)}">↓</button></div></div><p class="page-url">${e(CATEGORY_LABELS[task.finding.category] || '')} · 優先度 ${e(task.finding.severity)} · ${task.included ? '本次處理' : '暫緩'}</p><p>${e(task.finding.detail)}</p><label class="field" for="task-note-${i}">給自己或 AI 的補充備註（選填）<textarea id="task-note-${i}" data-task-note="${i}" rows="2" placeholder="例如：語氣親切一點、保留現有品牌名稱。">${e(task.note)}</textarea></label></article>`).join('')}<div class="actions"><button class="quiet" data-nav="results">回到檢測結果</button><button class="primary" data-nav="prompt">下一步：請 AI 協助 →</button></div></section>`;
 }
+
 function currentPrompt() { return compilePrompt(state.before, state.plan, { tool: state.tool, scope: state.scope, notes: state.notes }); }
 function renderPrompt() {
-  if (!state.before.length) return empty('AI 指令需要實際檢測資料', '先帶入網頁並選擇改善項目；不必申請 LLM API Key。');
+  if (!state.before.length) return empty('先完成檢測才能產生 AI 指令', '輸入網址檢測後，會把你勾選的問題打包成可直接貼給 ChatGPT／Gemini 的指令。');
   const selected = state.plan.filter(t => t.included);
-  return intro('04 / 請 AI 協助', '把完整背景，一次交給你的 AI。', '指令包含你選擇的問題、證據、修改範圍、備份與驗收要求。複製到既有 AI 對話即可；本工具不會替你傳送內容或登入網站。') +
-  `<div class="prompt-grid"><section class="panel"><h2>這次要交付的任務</h2><p class="panel-subtitle">已選擇 ${selected.length} 項。<button class="text-button" data-nav="plan">回去調整順序與內容</button></p><ol class="help-list">${selected.map(t => `<li>${e(t.finding.name)}</li>`).join('')}</ol><label class="field" for="ai-tool">交給哪個 AI 工具<select id="ai-tool">${['ChatGPT','Gemini','Claude','Codex','Claude Code','通用 AI 助手'].map(t => `<option ${state.tool === t ? 'selected' : ''}>${t}</option>`).join('')}</select></label><label class="field" for="scope">允許修改的範圍<textarea id="scope" rows="4">${e(state.scope)}</textarea></label><label class="field" for="prompt-notes">其他要求<textarea id="prompt-notes" rows="3" placeholder="例如：產品規格必須由工程人員確認。">${e(state.notes)}</textarea></label><div class="soft">一般對話型 AI 未必能讀取或操作網站。若沒有工具權限，請它提供草稿與操作指引，不要接受「已修改」的無證據宣稱。</div><button class="quiet" data-nav="verify">完成修改後，重新驗證 →</button></section><section class="panel"><h2>指令預覽</h2><label class="field" for="prompt-output">可複製的完整 Prompt<textarea id="prompt-output" class="prompt-text" readonly>${e(currentPrompt())}</textarea></label><div class="actions"><button id="copy-prompt" class="primary" ${selected.length ? '' : 'disabled'}>複製完整指令</button><button id="export-prompt" class="quiet" ${selected.length ? '' : 'disabled'}>下載文字檔</button></div><p class="panel-subtitle" style="margin-top:14px">貼上之前，請檢查是否含有不適合交給外部 AI 的網站資料。送出後請保留 AI 的修改紀錄，回到「重新驗證」再次讀取線上頁面。</p></section></div>`;
+  return intro('04 / 請 AI 協助', '一次打包，貼給 ChatGPT 或 Gemini 幫你改稿。', '如果只想改單一項目，也可以在「02 檢測結果」直接按每張卡片的「複製這題給 AI」。這裡適合一次請 AI 處理多項問題。') +
+  `<div class="prompt-grid"><section class="panel"><h2>這次交給 AI 的清單</h2><p class="panel-subtitle">已選擇 ${selected.length} 項。<button class="text-button" data-nav="plan">回去調整勾選項目</button></p><ol class="help-list">${selected.map(t => `<li>${e(t.finding.name)}</li>`).join('')}</ol><label class="field" for="ai-tool">你習慣用的 AI 工具<select id="ai-tool">${['ChatGPT','Gemini','Claude','Codex','Claude Code','通用 AI 助手'].map(t => `<option ${state.tool === t ? 'selected' : ''}>${t}</option>`).join('')}</select></label><label class="field" for="scope">允許 AI 做的範圍<textarea id="scope" rows="3">${e(state.scope)}</textarea></label><label class="field" for="prompt-notes">補充要求（選填）<textarea id="prompt-notes" rows="3" placeholder="例如：目標客群是台灣中小企業主，語氣專業但好懂。">${e(state.notes)}</textarea></label><button class="quiet" data-nav="verify">改完網站後，回來重新驗證 →</button></section><section class="panel"><h2>完整指令預覽</h2><label class="field" for="prompt-output">複製後直接貼到 AI 對話框<textarea id="prompt-output" class="prompt-text" readonly>${e(currentPrompt())}</textarea></label><div class="actions"><button id="copy-prompt" class="primary" ${selected.length ? '' : 'disabled'}>複製完整指令</button><button id="export-prompt" class="quiet" ${selected.length ? '' : 'disabled'}>下載文字檔</button></div></section></div>`;
 }
+
 function renderVerify() {
-  if (!state.before.length) return empty('先保留改善前的檢測', '同一套規則與來源方式，才能比較修正前後的差異。');
-  const comparison = state.after.length ? compareAudits(state.before, state.after, state.history[1]?.audits || []) : [];
+  if (!state.before.length) return empty('先保留修改前的檢測結果', '先檢測一次修改前的網頁，改完網站後就能在這裡看到前後對比。');
+  const comparison = state.after.length ? compareAudits(state.before, state.after, state.history[1]?.audits || []).filter(r => r.before?.category !== 'boundary') : [];
   const counts = ['已修正','尚未修正','新增問題','回歸問題','待確認'].map(k => `<span class="compare-pill">${k} <b>${comparison.filter(r => r.change === k).length}</b></span>`).join('');
-  return intro('05 / 重新驗證', '修正了什麼，讓證據說明。', '改善前的檢測會保留。重新讀取同一個線上網址，以相同設定比較最新版本；也可以多次驗證，檢查是否出現回歸問題。') +
-  (state.before.every(a => a.page.sourceKind === '虛構練習範例') ? `<section class="panel sample-panel"><span class="sample-tag">虛構範例 · 可重現的前後差異</span><h2>試試修正後的同一頁</h2><p class="panel-subtitle">載入另一份實際 HTML，再執行相同規則。這不代表任何正式網站已被修改。</p><button class="primary" id="sample-after">載入修正後範例並比較</button></section>` : '') +
-  (comparison.length ? `<section class="panel" id="comparison"><div class="filterbar"><h2>改善前 / 最近一次改善後</h2><div class="actions"><button class="quiet" id="export-report">匯出完整報告</button><button class="quiet" id="export-data">下載原始檢測資料</button></div></div><div class="compare-summary">${counts}</div><p class="panel-subtitle">「已修正」限原 FAIL／WARNING 變為 PASS；回歸包含前次已通過、這次又出現的問題。移除資料、未知、不同設定或缺頁，都不算修正。</p><div class="table-wrap"><table class="comparison-table"><thead><tr><th>頁面與檢查</th><th>改善前</th><th>改善後</th><th>比較結果</th></tr></thead><tbody>${comparison.map(r => `<tr><td><b>${e(r.name)}</b><br><small>${e(r.pageUrl)}</small></td><td>${label(r.before?.status || 'UNKNOWN')}<details><summary>原始證據</summary><pre class="evidence">${e(r.before?.evidence.excerpt || '未提供')}</pre></details></td><td>${label(r.after?.status || 'UNKNOWN')}<details><summary>本次證據</summary><pre class="evidence">${e(r.after?.evidence.excerpt || '未提供')}</pre></details></td><td><b>${e(r.change)}</b><br><small>${e(r.reason)}</small></td></tr>`).join('')}</tbody></table></div><div class="soft">下一步：優先檢查回歸與尚未修正的項目；待確認項目需要補足資料或外部驗證。技術通過不代表業務成效。</div></section>` : '') +
+  return intro('05 / 重新驗證', '改完網站後，再測一次確認成果。', '修改前的結果會保留。重新讀取同一個線上網址，馬上看出哪些問題已修正、有沒有不小心改壞其他項目。') +
+  (state.before.every(a => a.page.sourceKind === '虛構練習範例') ? `<section class="panel sample-panel"><span class="sample-tag">示範比對</span><h2>看看修正後的示範頁面</h2><p class="panel-subtitle">載入修好標題、摘要、圖片說明與規格表的範例，體驗前後比對。</p><button class="primary" id="sample-after">載入修正後示範並比較</button></section>` : '') +
+  (comparison.length ? `<section class="panel" id="comparison"><div class="filterbar"><h2>修改前 vs 修改後</h2><div class="actions"><button class="quiet" id="export-report">匯出報告</button><button class="quiet" id="export-data">下載原始 JSON</button></div></div><div class="compare-summary">${counts}</div><div class="table-wrap"><table class="comparison-table"><thead><tr><th>檢查項目</th><th>修改前</th><th>修改後</th><th>結果</th></tr></thead><tbody>${comparison.map(r => `<tr><td><b>${e(r.name)}</b>${state.before.length > 1 ? `<br><small>${e(r.pageUrl)}</small>` : ''}</td><td>${label(r.before?.status || 'UNKNOWN')}<details><summary>原本內容</summary><pre class="evidence">${e(r.before?.evidence.excerpt || '未提供')}</pre></details></td><td>${label(r.after?.status || 'UNKNOWN')}<details><summary>最新內容</summary><pre class="evidence">${e(r.after?.evidence.excerpt || '未提供')}</pre></details></td><td><b>${e(r.change)}</b><br><small>${e(r.reason)}</small></td></tr>`).join('')}</tbody></table></div></section>` : '') +
   importPanel('after') +
-  `<section class="panel"><h2>驗證紀錄</h2>${state.history.length ? state.history.map(h => `<div class="history-item">${e(new Date(h.at).toLocaleString('zh-TW'))} · ${h.pages} 頁 · 已修正 ${h.fixed} · 回歸 ${h.regressed} · 待確認 ${h.unknown}</div>`).join('') : '<p class="panel-subtitle">尚未執行改善後檢測。每次重新驗證都會留下本次摘要。</p>'}<p class="panel-subtitle">關閉分頁會清除本次資料。報告含改善前與最近一次的完整證據，以及每次驗證摘要；原始資料下載含所有驗證快照。</p></section>`;
+  `<section class="panel"><h2>驗證紀錄</h2>${state.history.length ? state.history.map(h => `<div class="history-item">${e(new Date(h.at).toLocaleString('zh-TW'))} · ${h.pages} 頁 · 已修正 ${h.fixed} · 回歸 ${h.regressed}</div>`).join('') : '<p class="panel-subtitle">尚未執行修改後檢測。</p>'}</section>`;
 }
+
 function renderHelp() {
-  return intro('使用說明', '知道能確認什麼，也知道下一步在哪裡。', '這是一個靜態 HTML 檢測與改善工作台。公開網址經本站服務擷取，核心分析在瀏覽器內執行；不依賴 LLM，也不會自動修改 WordPress。') +
-  `<section class="panel"><h2>第一次使用</h2><ol class="help-list"><li>在「開始檢測」輸入公開網頁網址，選擇是否為產品頁與多語系頁。</li><li>按「檢查這個網頁」，由本站服務讀取線上 HTML，立即在瀏覽器分析並顯示結果。</li><li>檢測後查看「原始證據」及「如何處理與驗收」。依外掛、主題及產品資料確認建議是否適用。</li><li>到「安排改善」選擇任務、調整順序與要求。可自行修改，也可將「請 AI 協助」的指令貼到既有 AI。</li><li>實際修改後，在「重新驗證」按「重新讀取並比較」，以相同網址與設定檢查最新線上版本。</li><li>關閉前匯出報告或原始資料。資料不會自動保存到瀏覽器或雲端；本版不提供報告重新匯入。</li></ol></section>
-  <div class="two-col"><section class="panel"><h2>結果怎麼讀？</h2><ul class="help-list">${Object.entries(STATUS_LABELS).map(([s,t]) => `<li>${label(s)}<br>${e(t)}${s === 'PASS' ? '，只代表該項已說明的局部條件符合。' : s === 'UNKNOWN' ? '，需要其他資料，不能當作通過。' : '。'}</li>`).join('')}</ul></section><section class="panel"><h2>能力邊界</h2><ul class="help-list"><li>網址由本站 Cloudflare 服務讀取，不受瀏覽器 CORS 限制。不傳送 Cookie 或登入資料；需要登入、驗證碼、阻擋機器人或逾時的頁面仍可能無法讀取。</li><li>不執行匯入 HTML 的 Script、不載入其中圖片、iframe 或外部資源。動態渲染後內容可能不在檔案內。</li><li>不檢查 HTTP 標頭、robots.txt、Sitemap、全站失效連結或跨頁 hreflang 回連。</li><li>JSON-LD 只驗證 JSON 語法；請另用 Google Rich Results Test 或 Schema.org validator 驗證規格。</li><li>表格與詢價連結只是結構提示；工程數值、翻譯、規格表語意及表單送出需要人工核對。</li><li>每批 20 頁，每頁 2 MB，合計 20 MB。大型或複雜頁面可能需要較久，超出範圍請分批。</li></ul></section></div>
-  <section class="panel"><h2>與既有工具搭配</h2><p class="panel-subtitle">在此整理證據、改善計畫與前後比較；需要更廣的網站資料時，使用既有工具補足。這些外部服務有各自的使用條件及資料政策。</p><div class="actions"><a href="https://search.google.com/search-console" target="_blank" rel="noopener noreferrer">Google Search Console ↗</a><a href="https://search.google.com/test/rich-results" target="_blank" rel="noopener noreferrer">Rich Results Test ↗</a><a href="https://validator.schema.org/" target="_blank" rel="noopener noreferrer">Schema.org Validator ↗</a><a href="https://pagespeed.web.dev/" target="_blank" rel="noopener noreferrer">PageSpeed Insights ↗</a></div></section>
-  <section class="panel"><h2>規則與來源</h2><p class="panel-subtitle">規則版本 ${RULE_VERSION}。官方規範、官方建議與本工具啟發式分開標示；不使用自創 SEO / AIO 總分。</p><ul class="help-list">${RULES.map(r => `<li><a href="${e(r.source)}" target="_blank" rel="noopener noreferrer">${e(r.name)}</a> · ${e(r.standard)}</li>`).join('')}</ul></section>
-  <section class="panel"><h2>開源與授權</h2><p class="panel-subtitle">WP Search Lab 由 Nio 指定開發，原創部分採 MIT。HTML 解析正式引用 parse5 8.1.1（MIT）與 entities（BSD-2-Clause），已隨此檔案完整包含授權。原創貢獻是繁中改善流程、證據映射、WordPress 指引、Prompt 組合與比較介面。</p><details><summary>parse5 授權全文</summary><pre class="legal">${e(parse5License)}</pre></details><details><summary>entities 授權全文</summary><pre class="legal">${e(entitiesLicense)}</pre></details><p class="panel-subtitle">完整來源、版本及開發測試入口見 Repository 的 THIRD_PARTY_NOTICES.md、README.md 與 PRD.md。</p></section>`;
+  return intro('使用說明', '這個工具能幫你做到什麼？', '專為沒有程式背景的 WordPress 經營者設計，依 Google 搜尋與實用內容指南，把網頁結構問題翻譯成具體修改步驟。') +
+  `<div class="two-col"><section class="panel"><h2>三步驟上手</h2><ol class="help-list"><li>在「開始檢測」貼上你的公開網頁網址。</li><li>看「Google 搜尋預覽」與「優先處理 Top 3」，照步驟到 WordPress 修改，或一鍵複製給 AI 幫忙改寫。</li><li>發佈更新後，到「重新驗證」再測一次，確認問題已解決。</li></ol></section><section class="panel"><h2>能力邊界（透明說明）</h2><ul class="help-list"><li>只讀取公開網頁的伺服器 HTML，不登入後台、不修改網站、也不執行頁面上的 JavaScript。</li><li>需要登入、驗證碼或阻擋機器人的網站可能無法直接讀取，可改用「上傳 HTML 檔案」。</li><li>結構檢查通過有助於搜尋與 AI 理解，但不保證特定排名；實際索引與速度建議搭配 Google Search Console 與 PageSpeed Insights。</li></ul></section></div>
+  <section class="panel"><h2>檢查規則與 Google 官方來源（規則版本 ${RULE_VERSION}）</h2><ul class="help-list">${RULES.filter(r => r.category !== 'boundary').map(r => `<li><a href="${e(r.source)}" target="_blank" rel="noopener noreferrer">${e(r.name)}</a> · ${e(r.standard)}</li>`).join('')}</ul></section>
+  <section class="panel"><h2>開源與授權</h2><p class="panel-subtitle">WP Search Lab 原創部分採 MIT 授權；HTML 解析使用 parse5 8.1.1（MIT）與 entities（BSD-2-Clause）。</p><details><summary>parse5 授權全文</summary><pre class="legal">${e(parse5License)}</pre></details><details><summary>entities 授權全文</summary><pre class="legal">${e(entitiesLicense)}</pre></details></section>`;
 }
+
 function addDrafts(target, incoming) {
   const current = state.drafts[target];
   if (current.length + incoming.length > LIMITS.pages) throw new Error('每批最多 20 頁，請先移除部分頁面。');
-  const total = [...current, ...incoming].reduce((sum,d) => sum + new TextEncoder().encode(d.html).byteLength, 0);
+  const total = [...current, ...incoming].reduce((sum, d) => sum + new TextEncoder().encode(d.html).byteLength, 0);
   if (total > LIMITS.totalBytes) throw new Error('這批資料超過 20 MB，請減少頁數。');
   for (const d of incoming) if (!d.html.trim() || new TextEncoder().encode(d.html).byteLength > LIMITS.pageBytes) throw new Error('檔案不可空白，每頁上限為 2 MB。');
   state.drafts[target].push(...incoming); render();
 }
+
 async function readFiles(input) {
   const target = input.dataset.target, files = Array.from(input.files);
   if (!files.length) return;
   if (files.some(f => !/\.html?$/i.test(f.name))) throw new Error('請選取 .html 或 .htm 網頁檔案。');
-  if (files.some(f => f.size > LIMITS.pageBytes)) throw new Error('有檔案超過每頁 2 MB 上限，請改用較小的網頁檔案。');
+  if (files.some(f => f.size > LIMITS.pageBytes)) throw new Error('有檔案超過每頁 2 MB 上限。');
   if (files.reduce((sum, f) => sum + f.size, 0) > LIMITS.totalBytes) throw new Error('檔案總計超過 20 MB，請減少頁數。');
-  const drafts = await Promise.all(files.map(async f => ({ name: f.name, html: await f.text(), url: '', sourceKind: '匯入網頁', capturedAt: new Date().toISOString(), context: { product: true, multilingual: false } })));
-  addDrafts(target, drafts); notify('網頁已加入。請逐頁填入並確認原始網址，再開始檢測；不會根據檔名或 Canonical 猜測網址。');
+  const drafts = await Promise.all(files.map(async f => ({ name: f.name, html: await f.text(), url: '', sourceKind: '匯入網頁', capturedAt: new Date().toISOString(), context: { product: false, multilingual: false } })));
+  addDrafts(target, drafts); notify('網頁已加入。請填入原始網址後按「開始檢測」。');
 }
+
 async function fetchPage(target) {
-  if (location.protocol === 'file:') throw new Error('線上網址檢測請使用作品集網站；此下載版本仍可在進階選項匯入 HTML。');
+  if (location.protocol === 'file:') throw new Error('線上網址檢測請使用作品集網站；此離線版本可在下方上傳 HTML 檔案。');
   const input = document.querySelector('#fetch-url').value.trim();
   const url = normalizeUrl(/^https?:\/\//i.test(input) ? input : 'https://' + input);
   const context = { product: document.querySelector('#fetch-product').checked, multilingual: document.querySelector('#fetch-multilingual').checked };
   const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 20000);
-  notify('正在讀取線上頁面並檢查結構，請稍候…');
-  const button = document.querySelector('#fetch-page'); button.disabled = true; button.textContent = '讀取與檢測中…';
+  notify('正在讀取線上頁面並分析結構，請稍候…');
+  const button = document.querySelector('#fetch-page'); button.disabled = true; button.textContent = '讀取與分析中…';
   try {
     const response = await fetch('/api/inspect-page', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url }), credentials: 'omit', signal: controller.signal });
     if (!(response.headers.get('content-type') || '').includes('application/json')) throw new Error('線上讀取服務暫時不可用，請稍後再試。');
@@ -122,29 +175,32 @@ async function fetchPage(target) {
     const snapshot = createSnapshot({ url: page.url, html: page.html, sourceKind: '線上網頁讀取', capturedAt: page.capturedAt, context });
     state.drafts[target] = [snapshot];
     runAudit(target);
-    notify(`已直接檢查線上頁面：${page.url} · HTTP ${page.status} · ${(page.bytes / 1024).toFixed(1)} KB · ${new Date(page.capturedAt).toLocaleString('zh-TW')}${page.requestedUrl !== page.url ? '（已跟隨網站轉址）' : ''}`);
+    notify(`已完成分析：${page.url}（${(page.bytes / 1024).toFixed(1)} KB）${page.requestedUrl !== page.url ? ' · 已自動跟隨轉址' : ''}`);
   } catch (error) {
-    if (error.name === 'TypeError' || error.name === 'AbortError') throw new Error('讀取服務連線失敗或逾時，請稍後重試。本次沒有產生新的檢測結果。');
+    if (error.name === 'TypeError' || error.name === 'AbortError') throw new Error('讀取服務連線失敗或逾時，請稍後重試。');
     throw error;
   } finally {
     clearTimeout(timer);
-    if (button.isConnected) { button.disabled = false; button.textContent = target === 'after' ? '重新讀取並比較' : '檢查這個網頁 →'; }
+    if (button.isConnected) { button.disabled = false; button.textContent = target === 'after' ? '重新讀取並比較' : '開始檢查這個網頁 →'; }
   }
 }
 
 function runAudit(target) {
-  if (target === 'before' && state.before.length) throw new Error('改善前證據已保留。要換網站，請先匯出後開始新檢測。');
+  if (target === 'before' && state.before.length) throw new Error('已保留修改前的檢測結果。要檢查新網站請先按右上角「開始新檢測」。');
   const audits = auditPages(state.drafts[target]);
   if (target === 'before') {
-    state.before = audits; state.plan = initialPlan(audits); state.view = 'results';
+    state.before = audits; state.plan = initialPlan(audits); state.filter = 'issues'; state.view = 'results';
   } else {
-    if (!state.before.length) throw new Error('請先完成改善前檢測。');
+    if (!state.before.length) throw new Error('請先完成修改前檢測。');
     const comparison = compareAudits(state.before, audits, state.after);
-    state.after = audits; state.history.unshift({ at: new Date().toISOString(), pages: audits.length, fixed: comparison.filter(r => r.change === '已修正').length, regressed: comparison.filter(r => r.change === '回歸問題').length, unknown: comparison.filter(r => r.change === '待確認').length, audits });
+    state.after = audits;
+    state.history.unshift({ at: new Date().toISOString(), pages: audits.length, fixed: comparison.filter(r => r.change === '已修正').length, regressed: comparison.filter(r => r.change === '回歸問題').length, unknown: comparison.filter(r => r.change === '待確認').length, audits });
     state.view = 'verify';
   }
-  render(); window.scrollTo({ top: 0 }); notify(target === 'before' ? `完成 ${audits.length} 頁靜態 HTML 檢測。請查看每項證據及能力限制。` : '已重新檢測並比較。改善前證據保持不變，請留意待確認與回歸項目。');
+  render(); window.scrollTo({ top: 0 });
+  notify(target === 'before' ? `完成 ${audits.length} 頁分析！建議先從上方「優先處理」項目下手。` : '已完成前後比對！');
 }
+
 function download(content, filename, type) {
   const url = URL.createObjectURL(new Blob([content], { type })), a = document.createElement('a');
   a.href = url; a.download = filename; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
@@ -167,27 +223,35 @@ document.addEventListener('click', async event => {
       state.drafts.after = [{ url: sampleUrl, html: sampleAfter, name: 'product-after.html', sourceKind: '虛構練習範例', capturedAt: new Date().toISOString(), context: { product: true, multilingual: false } }]; runAudit('after'); return;
     }
     if (button.id === 'add-source') {
-      const draft = createSnapshot({ url: document.querySelector('#page-url').value, html: document.querySelector('#source-html').value, sourceKind: '貼上原始碼', context: { product: true, multilingual: false } });
-      addDrafts(button.dataset.target, [draft]); notify('已加入原始碼。確認頁面類型後即可檢測。'); return;
+      const draft = createSnapshot({ url: document.querySelector('#page-url').value, html: document.querySelector('#source-html').value, sourceKind: '貼上原始碼', context: { product: false, multilingual: false } });
+      addDrafts(button.dataset.target, [draft]); notify('已加入原始碼，點「開始檢測」即可分析。'); return;
     }
     if (button.id === 'fetch-page') { setBusy(true); await fetchPage(button.dataset.target); return; }
     if (button.dataset.removeDraft !== undefined) { state.drafts[button.dataset.target].splice(Number(button.dataset.removeDraft), 1); render(); return; }
     if (button.id === 'run-audit' || button.id === 'run-after') { setBusy(true); await new Promise(resolve => setTimeout(resolve, 0)); runAudit(button.id === 'run-audit' ? 'before' : 'after'); return; }
     if (button.dataset.toggleTask) { const task = state.plan.find(t => t.findingKey === button.dataset.toggleTask); task.included = !task.included; render(); return; }
-    if (button.dataset.aiTask) { const task = state.plan.find(t => t.findingKey === button.dataset.aiTask); task.included = true; go('prompt'); notify('此問題已加入計畫。指令也包含計畫中其他已選項目；可回「安排改善」調整。'); return; }
+    if (button.dataset.copySingle) {
+      const finding = state.before.flatMap(a => a.results).find(r => r.key === button.dataset.copySingle);
+      if (!finding) return;
+      const text = compileSinglePrompt(finding);
+      try { await navigator.clipboard.writeText(text); notify(`已複製「${finding.name}」的 AI 改寫指令！直接貼到 ChatGPT 或 Gemini 即可。`); }
+      catch { go('prompt'); notify('瀏覽器未允許自動複製，已帶你到指令區手動複製。'); }
+      return;
+    }
     if (button.dataset.move !== undefined) { const i = Number(button.dataset.move), j = i + Number(button.dataset.direction); if (j >= 0 && j < state.plan.length) [state.plan[i], state.plan[j]] = [state.plan[j], state.plan[i]]; render(); return; }
     if (button.id === 'copy-prompt') {
       const value = currentPrompt();
-      try { await navigator.clipboard.writeText(value); notify('完整指令已複製。貼到你的 AI 對話後，先確認修改範圍與授權。'); }
-      catch { const area = document.querySelector('#prompt-output'); area.focus(); area.select(); notify('瀏覽器未允許自動複製，已選取指令。請按 ⌘C（Mac）或 Ctrl+C，或下載文字檔。'); }
+      try { await navigator.clipboard.writeText(value); notify('完整指令已複製，直接貼到你的 AI 對話框即可！'); }
+      catch { const area = document.querySelector('#prompt-output'); area.focus(); area.select(); notify('已選取指令，請按 ⌘C（Mac）或 Ctrl+C 複製。'); }
       return;
     }
     if (button.id === 'export-prompt') { download(currentPrompt(), 'wp-search-lab-prompt.txt', 'text/plain;charset=utf-8'); return; }
-    if (button.id === 'export-report') { download(reportHtml(reportData()), 'wp-search-lab-report.html', 'text/html;charset=utf-8'); notify('報告已產生。下載檔含網站證據與任務要求，分享前請確認內容。'); return; }
-    if (button.id === 'export-data') { download(JSON.stringify(reportData(), null, 2), 'wp-search-lab-evidence.json', 'application/json'); notify('原始檢測資料已產生，包含輸入 HTML 與各次驗證快照，請妥善保存。本版不提供重新匯入。'); return; }
+    if (button.id === 'export-report') { download(reportHtml(reportData()), 'wp-search-lab-report.html', 'text/html;charset=utf-8'); notify('檢測報告已下載。'); return; }
+    if (button.id === 'export-data') { download(JSON.stringify(reportData(), null, 2), 'wp-search-lab-evidence.json', 'application/json'); notify('原始檢測資料已下載。'); return; }
   } catch (error) { notify(error.message || '操作未完成，請檢查輸入後重試。', true); }
   finally { setBusy(false); }
 });
+
 document.addEventListener('change', async event => {
   const input = event.target;
   try {

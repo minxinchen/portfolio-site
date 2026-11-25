@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { auditPage, auditPages, compareAudits, initialPlan, compilePrompt, RULES } from '../tools/wp-search-lab/src/core.js';
+import { auditPage, auditPages, compareAudits, initialPlan, compilePrompt, compileSinglePrompt, RULES } from '../tools/wp-search-lab/src/core.js';
 const before=readFileSync(new URL('../tools/wp-search-lab/tests/fixtures/product-before.html',import.meta.url),'utf8');
 const after=readFileSync(new URL('../tools/wp-search-lab/tests/fixtures/product-after.html',import.meta.url),'utf8');
 const snapshot=(html,extra={})=>({url:'https://example.test/products/p-100',html,sourceKind:'fixture',context:{product:true,multilingual:false},...extra});
@@ -15,3 +15,19 @@ test('non-product page does not apply industrial heuristics',()=>{const a=auditP
 test('multilingual markup never claims reciprocal checks without evidence',()=>{const a=auditPage(snapshot(after+'<link rel="alternate" hreflang="en" href="https://example.test/en/p-100">',{context:{product:true,multilingual:true}}));assert.notEqual(status(a,'hreflang'),'PASS')});
 test('twenty actual snapshots are audited separately',()=>{const audits=auditPages(Array.from({length:20},(_,i)=>snapshot(before,{url:`https://example.test/p-${i}`})));assert.equal(audits.length,20);assert.equal(new Set(audits.flatMap(a=>a.results.map(r=>r.key))).size,20*RULES.length)});
 test('chat and coding prompts differ in authority while using the same evidence',()=>{const a=auditPage(snapshot(before)),plan=initialPlan([a]);const chat=compilePrompt([a],plan,{tool:'Gemini'}),code=compilePrompt([a],plan,{tool:'Claude Code'});assert.match(chat,/不要假設你能瀏覽/);assert.match(code,/已獲網站負責人授權/);for(const r of plan)assert.ok(code.includes(r.finding.pageUrl));assert.match(code,/UNKNOWN 不算修正/)});
+test('google SEO/AIO, links, readability and filename alt rules detect real issues',()=>{
+  const longPara='這是一段非常長沒有換行的正文測試內容，模擬手機畫面上的文字牆。'.repeat(12);
+  const html=`<!doctype html><html><head><title>首頁</title><meta name="robots" content="nosnippet"><script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","datePublished":"2026-11-20"}</script></head><body><main><h1>主標題</h1><h4>跳級小標</h4><p>${longPara}</p><a href="#">空連結</a><a href="/about">點這裡</a><img src="a.jpg" alt="IMG_1234.jpg"></main></body></html>`;
+  const a=auditPage(snapshot(html,{context:{product:false,multilingual:false}}));
+  assert.equal(status(a,'title'),'WARNING');
+  assert.equal(status(a,'robots-meta'),'WARNING');
+  assert.equal(status(a,'heading-structure'),'WARNING');
+  assert.equal(status(a,'readability'),'WARNING');
+  assert.equal(status(a,'links-quality'),'FAIL');
+  assert.equal(status(a,'image-alt'),'WARNING');
+  assert.equal(status(a,'html-lang'),'WARNING');
+  assert.equal(status(a,'eeat-signals'),'PASS');
+  assert.deepEqual(a.preview.stats.schemaTypes,['Article']);
+  const single=compileSinglePrompt(a.results.find(r=>r.ruleId==='readability'));
+  assert.match(single,/WordPress/);
+});
