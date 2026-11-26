@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <script>try{const s=localStorage.getItem("color-scheme");if(s==="light"||s==="dark")document.querySelector('meta[name="color-scheme"]').content=s;}catch{}</script>
-  <meta name="description" content="Nio Chen 的技術部落格：GitHub 開源工具雷達、AI Workflow 設計、生醫文獻驗證實驗、多 Agent 協作踩坑與 B2B 效能實測。">
+  <meta name="description" content="Nio Chen 的技術筆記：開源工具選型、雙管線 Workflow、生醫論文壓縮驗證、多 Agent 協作踩坑與 B2B 效能隔離實測。">
   <title>技術文章 · Nio Chen</title>
   <link rel="canonical" href="https://portfolio-site-1b8.pages.dev/journal/">
   <link rel="stylesheet" href="../assets/style.css">
@@ -34,9 +34,9 @@
   <main>
     <div class="container">
       <header class="page-hero">
-        <span class="smallcaps">JOURNAL // TECHNICAL BLOG &amp; FIELD NOTES</span>
-        <h1>技術文章與實戰筆記</h1>
-        <p>這裡記錄我實際跑過的開源工具研究、AI 工作流設計、實驗驗證踩坑與 B2B 網站實測。不追求包裝成完美教學，重點是把判斷依據、失敗案例和邊界條件寫清楚。</p>
+        <span class="smallcaps">JOURNAL // FIELD NOTES</span>
+        <h1>技術文章</h1>
+        <p>開源工具評測、AI 工作流設計、實驗驗證與網站效能實測的現場筆記。</p>
       </header>
 
       <div class="journal-tools">
@@ -46,52 +46,47 @@
           <button class="filter" type="button" data-filter="AI 工作流" aria-pressed="false">AI 工作流</button>
           <button class="filter" type="button" data-filter="驗證與實測" aria-pressed="false">驗證與實測</button>
         </div>
-        <input class="search-input" type="search" data-search aria-label="搜尋文章" placeholder="搜尋關鍵字（如 pstack、雙盲、LCP）…">
+        <input class="search-input" type="search" data-search aria-label="搜尋文章" placeholder="搜尋關鍵字（pstack、雙盲、LCP…）">
       </div>
 
       <div class="journal-list">
         <a class="journal-row" data-post data-category="開源雷達" href="github-radar.html">
-          <span class="smallcaps">開源雷達 // OPEN SOURCE</span>
-          <h3>GitHub 開源工具實作雷達：為什麼我看重 Superpowers、pstack 與 Ponytail 這類設計？</h3>
-          <p>Star 數只是關注訊號，不是品質或適配性的證據。分享我評估開源工具的篩選尺規，以及這幾個專案在「少即是多」與規格適配上的啟發。</p>
-          <div class="bottom"><span>2026-11 · 技術觀察</span><span>閱讀全文 ↗</span></div>
+          <span class="smallcaps">開源雷達 · 2026-11</span>
+          <h3>連追六期 GitHub AI 專案後，我怎麼決定「不安裝」</h3>
+          <p>看過 Superpowers、pstack、Ponytail 等專案後，整理出四個低成本查核條件，分辨哪些工具值得整合、哪些借鏡思路就好。</p>
+          <div class="bottom"><span>開源選型</span><span>閱讀 ↗</span></div>
         </a>
 
         <a class="journal-row" data-post data-category="AI 工作流" href="ai-research-workflow.html">
-          <span class="smallcaps">AI 工作流 // BLUEPRINT</span>
-          <h3>把每日技術追蹤拆成兩條管線：GitHub 雷達 × AIoT 微課的 Workflow 設計</h3>
-          <p>把原本混在一起的定時追蹤拆成兩條獨立生產線，加上 4 道 Quality Gate 與最小持久化檔案結構，確保不把構想寫成實測。</p>
-          <div class="bottom"><span>2026-11 · 流程設計</span><span>閱讀全文 ↗</span></div>
+          <span class="smallcaps">AI 工作流 · 2026-11</span>
+          <h3>單一 Prompt 排程壞掉之後：我怎麼把技術日報拆成雙管線</h3>
+          <p>收完六期日報後停掉原排程，拆成 GitHub 雷達與 AIoT 微課兩條獨立生產線，加上 4 道 Gate 與最小檔案結構。</p>
+          <div class="bottom"><span>Workflow Blueprint</span><span>閱讀 ↗</span></div>
         </a>
 
         <a class="journal-row" data-post data-category="驗證與實測" href="compression-validation.html">
-          <span class="smallcaps">驗證與實測 // AI VALIDATION</span>
-          <h3>跑出 100% 通過率之後，為什麼我反而懷疑這套 AI 流程沒測出東西？</h3>
-          <p>在 10 篇腸腦軸 PMC 生醫論文壓縮實驗中，抓出指標飽和、變因未隔離、評審雙盲錨定，以及中文評估標籤「踩了／沒踩」的雙向歧義。</p>
-          <div class="bottom"><span>2026-05 · 實驗筆記</span><span>閱讀全文 ↗</span></div>
+          <span class="smallcaps">驗證與實測 · 2026-05</span>
+          <h3>n=10 跑出 100% Pass 卻讓我起疑：論文壓縮實驗的四個盲點</h3>
+          <p>10 篇腸腦軸 PMC 論文壓縮實驗拆解：指標飽和、變因混雜、雙盲錨定，以及中文評估詞「踩了／沒踩」的語意地雷。</p>
+          <div class="bottom"><span>document-compression-lab</span><span>閱讀 ↗</span></div>
         </a>
 
         <a class="journal-row" data-post data-category="AI 工作流" href="session-continuity.html">
-          <span class="smallcaps">AI 工作流 // MULTI-AGENT</span>
-          <h3>多 Agent 協作的踩坑紀錄：什麼時候該喊停，哪些決定不能交給 AI</h3>
-          <p>從「計劃性喊停」、定性權與執行權分離，到「Codex 釐清需求 → 人拍板 → Claude 執行」與同 Session 多工導致注意力分散的實戰紀錄。</p>
-          <div class="bottom"><span>2026-05 · 協作紀錄</span><span>閱讀全文 ↗</span></div>
+          <span class="smallcaps">AI 工作流 · 2026-05</span>
+          <h3>同時用 Claude 和 Codex 踩坑記：怎麼避免淪為複製貼上搬運工</h3>
+          <p>從第二輪喊停、超過 10 行不是我打的 Prompt，到同一個 Session 邊改工具邊趕交付導致字數腦補（~2,800 vs 3,213）的紀錄。</p>
+          <div class="bottom"><span>ai-workstation-handoff</span><span>閱讀 ↗</span></div>
         </a>
 
         <a class="journal-row" data-post data-category="驗證與實測" href="kiyan-experiment.html">
-          <span class="smallcaps">驗證與實測 // B2B SEO</span>
-          <h3>不是先改整個網站，而是先找出瓶頸：B2B 網站效能隔離測試與內容查核</h3>
-          <p>從行動版首頁 Mobile LCP 13.10s → 3.16s → 2.72s 的隔離試驗，談 B2B 技術內容的雙路徑查核與「有設備 ≠ 會操作」的邏輯邊界。</p>
-          <div class="bottom"><span>2026-05 · B2B 實戰</span><span>閱讀全文 ↗</span></div>
+          <span class="smallcaps">驗證與實測 · 2026-05</span>
+          <h3>只動首屏就把 Mobile LCP 從 13.1s 壓到 2.7s：KIYAN 隔離測試筆記</h3>
+          <p>比例閥三語網站的行動版首屏隔離實測，加上 B2B 內容查核時抓出的三個常見邏輯跳躍。</p>
+          <div class="bottom"><span>seo-aio-b2b-case-study</span><span>閱讀 ↗</span></div>
         </a>
       </div>
 
-      <p data-empty hidden style="margin:24px 0;color:var(--mute);font-family:var(--mono);font-size:13.5px">目前沒有符合篩選條件的文章。</p>
-
-      <div class="newsbar" style="margin-bottom:20px">
-        <p>文章會隨後續實驗與新證據持續增補；已實測結果與未部署藍圖皆在文內分開標示。</p>
-        <a href="../projects/index.html" class="tiny-link">看互動工具與 GitHub 實驗室</a>
-      </div>
+      <p data-empty hidden style="margin:24px 0;color:var(--mute);font-family:var(--mono);font-size:13.5px">找不到符合條件的文章。</p>
     </div>
   </main>
 
@@ -99,7 +94,7 @@
     <div class="container footer-inner">
       <div>
         <a class="logo" href="../index.html"><strong>nio<span>.</span>chen</strong><small>LAB &amp; NOTES</small></a>
-        <p>Built for readability &amp; verification. © 2026 Nio Chen</p>
+        <p>© 2026 Nio Chen · Built with static HTML &amp; Cloudflare Pages</p>
       </div>
       <div class="footer-links">
         <a href="../projects/index.html">作品與實驗室</a>

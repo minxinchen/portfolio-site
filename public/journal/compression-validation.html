@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <script>try{const s=localStorage.getItem("color-scheme");if(s==="light"||s==="dark")document.querySelector('meta[name="color-scheme"]').content=s;}catch{}</script>
-  <meta name="description" content="在 10 篇腸腦軸 PMC 生醫論文壓縮實驗跑出 100% pass 後，為何反而發現指標飽和、變因未隔離、雙盲錨定與中文評估詞歧義？">
-  <title>跑出 100% 通過率之後，為什麼我反而懷疑這套 AI 流程沒測出東西？ · Nio Chen</title>
+  <meta name="description" content="10 篇腸腦軸 PMC 生醫論文壓縮實驗跑出 100% pass 後，追查出的四個實驗設計盲點與 v2 修正做法。">
+  <title>n=10 跑出 100% Pass 卻讓我起疑：論文壓縮實驗的四個盲點 · Nio Chen</title>
   <link rel="canonical" href="https://portfolio-site-1b8.pages.dev/journal/compression-validation.html">
   <link rel="stylesheet" href="../assets/style.css">
 </head>
@@ -36,46 +36,65 @@
       <div class="reading">
         <header class="article-head">
           <a class="back-link" href="index.html">← 返回技術文章</a>
-          <p class="smallcaps" style="margin:22px 0 0">驗證與實測 // AI VALIDATION &amp; BIOMED</p>
-          <h1>跑出 100% 通過率之後，為什麼我反而懷疑這套 AI 流程沒測出東西？</h1>
-          <p class="lead">我拿 10 篇腸腦軸 PMC 開放生醫論文測試雙 Reviewer 壓縮流程，第一版跑出 100% pass、平均 1.3 輪。看似很成功，但停下來細問實驗設計後，才發現這個數字其實藏了四個盲點。</p>
+          <p class="smallcaps" style="margin:22px 0 0">驗證與實測 // 2026-05</p>
+          <h1>n=10 跑出 100% Pass 卻讓我起疑：論文壓縮實驗的四個盲點</h1>
+          <p class="lead">拿 10 篇腸腦軸 PMC Open Access 論文測雙 Reviewer 壓縮流程（目標保留 65% ± 3% 字元），v1 跑出 100% pass、平均 1.3 輪。數字很漂亮，但回頭拆變因後發現這輪其實什麼都還沒證明。</p>
           <div class="article-info">
             <span>Nio Chen</span>
-            <span>2026-05</span>
             <span>分類：驗證與實測</span>
             <span>Repo：<a href="https://github.com/minxinchen/document-compression-lab" target="_blank" rel="noopener noreferrer" style="color:var(--accent)">document-compression-lab ↗</a></span>
           </div>
         </header>
 
         <article class="article-prose">
-          <p>這個實驗原本很單純：把 10 篇腸腦軸（gut-brain axis）的 NCBI / PMC Open Access 論文壓縮掉 35% 字元數（保留 65% ± 3%），由一個 Writer 負責壓縮，再交給兩層 Reviewer（輕量模型檢查機械格式、進階模型檢查語意與數據保真度）審查退回。</p>
-          <p>第一輪跑完，10 篇全部通過，平均只要 1.3 輪就過關。如果是寫展示簡報，到這裡就可以截圖宣告「AI 文獻壓縮流程 100% 成功」了。但念過生醫實驗設計的人看到 <strong>n=10 跑出 100% pass</strong>，直覺反而會響警報：<strong>這到底是真的有效，還是題目太簡單、測不出差異？</strong></p>
+          <p>v1 的做法是讓一個 Writer 壓縮論文，再交給 Haiku（查格式與字數）跟 Sonnet（查語意與數據保真）輪流審。10 篇全過之後，我反問了一個問題：如果今天要把這套流程長期拿來訓練 Agent，這組 100% 能不能拿來當證據？答案是不行。</p>
 
-          <h2>一、100% 通過率掩蓋的三個問題</h2>
-          <ol>
-            <li><strong>指標飽和（Ceiling Effect）：</strong>在保留 65% 字元數的設定下通過率已經頂到天花板，這個指標就喪失了鑑別力。如果改壓到 50%、40% 甚至 30%，流程在哪裡會開始斷裂？沒有做壓力測試（break-point testing），就不知道系統的安全操作區間在哪。</li>
-            <li><strong>變因完全混在一起：</strong>單次跑出好結果，可能是模型剛好運氣好、這 10 篇論文結構規整、Prompt 寫對了，或者雙 Reviewer 架構真的有用。沒把這幾個變因分開（例如跑 v1 歸檔版 vs. v2 新版的成對對照，或關掉其中一條規則做 Ablation），就不能宣稱是架構帶來的因果改善。</li>
-            <li><strong>「均勻刪減」會傷到論文資訊密度最高的段落：</strong>第一版讓模型邊寫邊抓 65% 比例，結果為了湊總字數，模型容易去砍 <code>Results</code> 裡的量化對照數據，反而留下一堆背景鋪陳。</li>
-          </ol>
+          <h2>四個實際抓出來的盲點</h2>
+          <div class="data-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>盲點</th>
+                  <th>v1 發生了什麼事</th>
+                  <th>v2 改法</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>1. 指標飽和</strong></td>
+                  <td>保留 65% 時通過率已經頂到 100%，分不出 Prompt 或架構差異。</td>
+                  <td>改看還有空間的指標（平均迭代次數、修訂數、字數變異），並規劃壓到 50%/40%/30% 測斷裂點。</td>
+                </tr>
+                <tr>
+                  <td><strong>2. 變因混在一起</strong></td>
+                  <td>模型隨機性、論文難度、Prompt、雙 Reviewer 全部混在單次 <code>n=10</code> 裡。</td>
+                  <td>把 v1 歸檔到 <code>agents_archive/compressor.v1.md</code> 當對照組；每條防呆規則標上失敗來源（如 <code>[src: lab/01/iter2/H4]</code>），方便做消融對照。</td>
+                </tr>
+                <tr>
+                  <td><strong>3. 均勻砍字傷到數據</strong></td>
+                  <td>「邊寫邊算字數」讓模型在最後為了湊 65%，直接砍掉 <code>Results</code> 裡的對照數字。</td>
+                  <td>拆成 <code>Plan → Execute → Audit → Emit</code>，先分配非均勻章節預算（優先保 Results，多削 Intro/Methods）。</td>
+                </tr>
+                <tr>
+                  <td><strong>4. 中文評估詞雙向歧義</strong></td>
+                  <td>同期審查表用了「踩了／沒踩」，結果有人讀成「踩中達標」，有人讀成「踩雷違反」。</td>
+                  <td>給 Agent 和 Evaluator 讀的規則與標籤全面改英文（或明確定義「合規／漂移」），交付給人看才翻中文。</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
 
-          <h2>二、v2 改版時故意「拒絕」的兩個常見做法</h2>
-          <p>把這個實驗升級成可重複對照的 v2 流程時，我們把單段輸出拆成 <code>Plan → Execute → Audit → Emit</code> 四階段，並針對論文結構做非均勻預算分配（例如 <code>Results</code> 優先保留量化數據，<code>Intro / Methods</code> 容許較高精簡幅度），每條防呆規則也都標上失敗來源（例如 <code>[src: lab/01/iter2/H4]</code>），方便未來單獨關閉某條規則做消融實驗。</p>
-          <p>更有意思的是，我們刻意<strong>拒絕了兩個看起來很貼心的設計</strong>：</p>
+          <h2>v2 刻意拒絕的兩個功能</h2>
+          <p>升級 v2 時，我們排除了兩個看起來很合理、但會毀掉觀測準度的設計：</p>
           <ul>
-            <li><strong>拒絕把「壓縮理由（compression rationale）」一起交給 Reviewer：</strong>因為一旦 Writer 附上一長段「我為什麼這樣刪」的辯解，Reviewer 很容易被說服而產生錨定效應，破壞獨立審查的雙盲原則。</li>
-            <li><strong>拒絕讓 Writer 自己先跑語意 Self-Review：</strong>Stage 3 只做純機械檢查（字元數、括號、格式）。如果 Writer 自己先做語意潤飾，Reviewer 抓到的問題變少時，我們將無法分辨究竟是「規則變好了」，還是「缺陷被 Writer 自己藏起來了」。相對地，我們新增了 <code>SELF_DOUBT</code> 欄位，讓 Writer 老實標出「哪一段我自己沒把握」，再回頭算它猜中 Reviewer 挑錯的準確率。</li>
+            <li><strong>不把「壓縮理由（rationale）」送給 Reviewer：</strong>Writer 如果附上一整段解釋「我為什麼刪這句」，Reviewer 很容易被說服，失去雙盲獨立判斷。</li>
+            <li><strong>不做語意 Self-Review：</strong>Stage 3 Audit 只檢查字元數、括號等機械條件。如果 Writer 自己先修掉語意缺陷，Reviewer 抓到的 issue 數下降時，會分不清是規則變好還是缺陷被藏起來了。改由 Writer 在輸出時填寫 <code>SELF_DOUBT</code>，事後對照它自己沒把握的地方是不是真的被 Reviewer 挑中。</li>
           </ul>
 
-          <h2>三、順手抓到的隱藏地雷：中文評估詞的雙向歧義</h2>
-          <p>在同期的另一組評估紀錄裡，我們還踩到一個很真實的坑：審查表裡用了中文標籤「<strong>踩了／沒踩</strong>」，結果不同人與不同模型對「踩了」的理解完全相反——有人讀成「踩中達標」，有人讀成「踩雷違反」！</p>
-          <p>這讓我們定下一條非常實際的規範：<strong>寫給 Agent 與 Evaluator 看的規則層、標籤定義一律用明確的英文（或無歧義的「合規／漂移」配定義），只在最後交付給人閱讀時才翻成自然中文。</strong>自然語言的一點點模糊，進到自動化評估管線裡就會被放大成整批誤判。</p>
-
-          <blockquote>在 AI 工作流裡，最危險的往往不是模型當場報錯，而是它給你一個看起來很漂亮的 100% 通過率，讓你以為自己已經驗證完了。</blockquote>
-
-          <div class="note-box">
-            <strong>關聯專案與實證邊界</strong>
-            <p style="margin:6px 0 0">這套「反自嗨、先找假象」的思路，也同樣用在我的 <a href="../tools/survival-evidence-lab/">TCGA-KIRC 存活敏感度實驗室</a>（刻意保留 CP04 v2 交叉驗證的陰性結論）。文獻壓縮實驗室的 v1 歸檔與回歸測試設計可參考 GitHub 上的 <a href="https://github.com/minxinchen/document-compression-lab" target="_blank" rel="noopener noreferrer">document-compression-lab ↗</a>；跨領域大樣本（n≥30）消融實驗目前仍列為後續待驗證項目，尚未宣稱完成。</p>
-          </div>
+          <details>
+            <summary>展開：目前進度與尚未跑完的項目</summary>
+            <p>v1 歸檔、v2 四階段規格與回歸測試架構已整理在 <a href="https://github.com/minxinchen/document-compression-lab" target="_blank" rel="noopener noreferrer">document-compression-lab ↗</a>。拿全新 10–30 篇 PMC 論文跑 v1 vs. v2 成對消融實驗尚未執行，目前先留作下一階段驗證。同一套「防假陽性」的檢查習慣，也可以在 <a href="../tools/survival-evidence-lab/">TCGA-KIRC 存活敏感度實驗室</a> 直接看到。</p>
+          </details>
 
           <hr class="soft-rule" style="margin:36px 0 22px">
           <a class="tiny-link" href="index.html">返回技術文章列表</a>
@@ -88,7 +107,7 @@
     <div class="container footer-inner">
       <div>
         <a class="logo" href="../index.html"><strong>nio<span>.</span>chen</strong><small>LAB &amp; NOTES</small></a>
-        <p>Built for readability &amp; verification. © 2026 Nio Chen</p>
+        <p>© 2026 Nio Chen · Built with static HTML &amp; Cloudflare Pages</p>
       </div>
       <div class="footer-links">
         <a href="../projects/index.html">作品與實驗室</a>

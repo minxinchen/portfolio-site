@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <script>try{const s=localStorage.getItem("color-scheme");if(s==="light"||s==="dark")document.querySelector('meta[name="color-scheme"]').content=s;}catch{}</script>
-  <meta name="description" content="關於 Nio Chen（陳明昕）：生醫資訊背景、跨領域實作筆記，以及建立這個技術部落格與互動實驗室的原因。">
+  <meta name="description" content="關於 Nio Chen（陳明昕）：生醫資訊背景、醫材臨床支援、B2B 技術行銷與 AI 工作流實作。">
   <title>關於 · Nio Chen</title>
   <link rel="canonical" href="https://portfolio-site-1b8.pages.dev/about.html">
   <meta property="og:title" content="關於 · Nio Chen">
-  <meta property="og:description" content="把 GitHub 實驗室與真實工作筆記做成打開就能讀、能操作的網頁。">
+  <meta property="og:description" content="生醫資訊背景，專注問題拆解、資料驗證、開源整合與 Agentic Workflow 實作。">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://portfolio-site-1b8.pages.dev/about.html">
   <meta property="og:image" content="https://portfolio-site-1b8.pages.dev/assets/og-card.png">
@@ -40,28 +40,25 @@
     <div class="container">
       <header class="page-hero">
         <span class="smallcaps">ABOUT // NIO CHEN</span>
-        <h1>關於我與這個網站</h1>
-        <p>履歷表上已經有完整的工作年資與經歷，這個網站不重複貼履歷，而是把原本放在 GitHub 與本機實驗室的專案、工具和踩坑紀錄，做成打開網址就能直接閱讀與操作的技術部落格。</p>
+        <h1>關於 Nio</h1>
+        <p>生醫資訊與醫學工程碩士，歷經研究資料整理、手術導航醫材臨床支援與 B2B 工業技術行銷，現在長期實驗 Agentic Workflow、資料驗證與輕量網頁工具。</p>
       </header>
 
       <div class="about-content">
         <div class="bio">
-          <h2 style="margin-bottom:14px">為什麼要自己維護這個站？</h2>
-          <p>實務上，很少有人會一個一個點開 GitHub repository、翻完 README 再把程式跑起來。用靜態 HTML 整理成部落格和線上互動工具，閱讀門檻低很多，討論或交流時也能直接開畫面驗證，不用只靠口頭說明。</p>
+          <h2 style="margin-bottom:14px">我在專案裡的角色</h2>
+          <p>在各個專案裡，我主要負責<strong>問題定義、資料來源查核、開源工具選型與驗收規則設計</strong>；程式碼實作與自動化測試則搭配成熟開源套件與 AI（Claude Code、Codex）協作完成，並以公開資料與回歸測試檢驗結果。</p>
+          <p>這個站用來整理可操作的靜態工具與實驗筆記——用 HTML 呈現表格、流程圖與互動頁面，比純文字更容易直接對照與複盤。</p>
 
-          <h2 style="margin:28px 0 14px">跨領域背景帶給我的習慣</h2>
-          <p>我念的是生物資訊與醫學工程，後來走過研究資料整理、醫療器材臨床支援與 B2B 工業技術行銷。這些不同現場教會我同一件事：<strong>比起漂亮的名詞，更重要的是資料從哪裡來、假設在什麼條件下會失效，以及使用者在現場到底卡在哪一步。</strong></p>
-          <p>我不是本科純軟體工程師，也不會把自己包裝成資深全端。我在專案裡的核心角色是需求拆解、開源工具選型、工作流程與驗收規則設計；程式碼實作與自動化測試則透過 AI 協作完成，並用真實公開資料與測試案例反覆檢查誤判。</p>
-
-          <h2 style="margin:28px 0 14px">本站的書寫原則</h2>
+          <h2 style="margin:28px 0 14px">三個長期關注的方向</h2>
           <ul>
-            <li><strong>區分事實、實驗與構想：</strong>已上線的功能、單次實驗結果與尚未部署的 Workflow 藍圖會明確分開標示，不把未來式寫成現在式。</li>
-            <li><strong>誠實保留限制與陰性結果：</strong>例如 TCGA-KIRC 交叉驗證的陰性結論、工具無法繞過登入牆的限制、競品重疊之處，都會直接寫出來。</li>
-            <li><strong>清楚標註開源與 AI 貢獻：</strong>第三方開源元件保留原始授權與作者出處，不將開源或模型產出宣稱為個人原創。</li>
+            <li><strong>Agentic Workflow 與驗證：</strong>怎麼設計可重跑、可消融對照的 AI 流程，以及多代理協作時人機權責的切分點。</li>
+            <li><strong>生醫與研究資料查核：</strong>從資料清洗、切點敏感度到 Python / R 交叉驗證，保留真實統計邊界與陰性結果。</li>
+            <li><strong>B2B 網站與開源整合：</strong>把 SEO、效能隔離測試與技術內容整理成可量測、一般經營者也能操作的工具。</li>
           </ul>
         </div>
 
-        <aside class="fact-list" aria-label="快速資訊">
+        <aside class="fact-list" aria-label="基本資訊">
           <dl>
             <div>
               <dt>NAME</dt>
@@ -69,15 +66,11 @@
             </div>
             <div>
               <dt>BACKGROUND</dt>
-              <dd>生物資訊與醫學工程碩士 · 醫材臨床支援 · B2B 技術行銷</dd>
+              <dd>生醫資訊碩士 · 醫材臨床支援 · B2B 技術行銷</dd>
             </div>
             <div>
-              <dt>CURRENT FOCUS</dt>
-              <dd>Agentic Workflow、開源工具選型、生醫與 B2B 資料驗證</dd>
-            </div>
-            <div>
-              <dt>PRIMARY STACK</dt>
-              <dd>Claude Code / Codex 協作、GitHub、Cloudflare Pages、Python、R、WordPress / SEO</dd>
+              <dt>STACK &amp; TOOLS</dt>
+              <dd>Claude Code / Codex、Python、R、GitHub Actions、Cloudflare Pages、WordPress / SEO</dd>
             </div>
             <div>
               <dt>LIVE TOOLS</dt>
@@ -97,13 +90,13 @@
       <div class="cta" id="contact">
         <div>
           <span class="smallcaps">CONTACT</span>
-          <h2>有技術問題、研究想法或合作機會？</h2>
-          <p>歡迎直接來信交流，也可以從技術文章與 GitHub 實驗室認識我的實作方式。</p>
+          <h2>想交流專案、研究或合作機會？</h2>
+          <p>歡迎直接寄信，或到 GitHub 查看各實驗室的原始碼與紀錄。</p>
         </div>
         <div style="display:flex;gap:10px;flex-wrap:wrap">
           <a class="round-link" href="mailto:a0978278662@gmail.com">Email ↗</a>
           <a class="round-link alt" href="https://github.com/minxinchen" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
-          <a class="round-link alt" href="journal/index.html">看技術文章</a>
+          <a class="round-link alt" href="journal/index.html">技術文章</a>
         </div>
       </div>
     </div>
@@ -113,7 +106,7 @@
     <div class="container footer-inner">
       <div>
         <a class="logo" href="index.html"><strong>nio<span>.</span>chen</strong><small>LAB &amp; NOTES</small></a>
-        <p>Built for readability &amp; verification. © 2026 Nio Chen</p>
+        <p>© 2026 Nio Chen · Built with static HTML &amp; Cloudflare Pages</p>
       </div>
       <div class="footer-links">
         <a href="projects/index.html">作品與實驗室</a>

@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <script>try{const s=localStorage.getItem("color-scheme");if(s==="light"||s==="dark")document.querySelector('meta[name="color-scheme"]').content=s;}catch{}</script>
-  <meta name="description" content="多 Agent 協作實戰踩坑：為什麼要在第二輪計劃性喊停、定性權為何不能交給 AI、以及同 Session 多工如何拉低品質。">
-  <title>多 Agent 協作的踩坑紀錄：什麼時候該喊停，哪些決定不能交給 AI · Nio Chen</title>
+  <meta name="description" content="同時使用 Claude Code 與 Codex 協作的踩坑紀錄：第二輪喊停、超過 10 行不是我打的 Prompt，以及同 Session 多工導致的失誤。">
+  <title>同時用 Claude 和 Codex 踩坑記：怎麼避免淪為複製貼上搬運工 · Nio Chen</title>
   <link rel="canonical" href="https://portfolio-site-1b8.pages.dev/journal/session-continuity.html">
   <link rel="stylesheet" href="../assets/style.css">
 </head>
@@ -36,48 +36,36 @@
       <div class="reading">
         <header class="article-head">
           <a class="back-link" href="index.html">← 返回技術文章</a>
-          <p class="smallcaps" style="margin:22px 0 0">AI 工作流 // MULTI-AGENT GOVERNANCE</p>
-          <h1>多 Agent 協作的踩坑紀錄：什麼時候該喊停，哪些決定不能交給 AI</h1>
-          <p class="lead">很多人以為多 Agent 協作最難的是寫串接腳本，但我實際在個人工作站跑了幾個月後，發現真正容易失控的是「決策權被悄悄稀釋」與「同一個對話裡做太多雜事」。</p>
+          <p class="smallcaps" style="margin:22px 0 0">AI 工作流 // 2026-05</p>
+          <h1>同時用 Claude 和 Codex 踩坑記：怎麼避免淪為複製貼上搬運工</h1>
+          <p class="lead">派 6 個 subagent 跑完第二輪評估那天，我直接喊停了——因為兩個模型開始拿對方的話當前提越疊越細，我反而變成在中間傳話的人。</p>
           <div class="article-info">
             <span>Nio Chen</span>
-            <span>2026-05</span>
             <span>分類：AI 工作流</span>
             <span>Repos：<a href="https://github.com/minxinchen/ai-workstation-handoff" target="_blank" rel="noopener noreferrer" style="color:var(--accent)">ai-workstation-handoff ↗</a> · <a href="https://github.com/minxinchen/context-recall-lab" target="_blank" rel="noopener noreferrer" style="color:var(--accent)">context-recall-lab ↗</a></span>
           </div>
         </header>
 
         <article class="article-prose">
-          <p>剛開始同時用 Claude Code 和 Codex 協作管理自己的工作站時，我一度覺得「派 5、6 個 subagent 互相驗證」很有效率。直到有一次做到第二輪深度評估，我突然停下來喊卡——因為我發現，<strong>我從專案決策者，變成了在兩個 AI 之間複製貼上的訊息搬運工。</strong></p>
+          <p>那次其實沒有任何檔案被改壞。真正失控的是「概念」：兩個 Agent 在互相回應的過程中，替一個還在實驗階段的資料夾憑空訂了升級門檻（<code>n ≥ 50</code>、通過率 <code>≥ 70%</code>），還提前把它定性成正式記憶層。改錯程式碼可以 <code>git revert</code>，但整套前提被模型定死後，要花好幾倍力氣才拆得掉。</p>
 
-          <h2>一、為什麼要「計劃性喊停」？檔案能救回，概念定性權不能</h2>
-          <p>那次失控的徵兆非常微妙：兩個 Agent 沒有改壞任何程式碼，但它們開始互相拿對方的建議當成既定前提，越疊越細——替還沒成熟的實驗憑空設了升級門檻（例如「樣本數達 50、通過率 70%」），也提前把實驗身份框死成正式記憶層。</p>
-          <p>這件事讓我畫出一條很清楚的紅線：<strong>把「執行權」跟「定性權」分開。</strong></p>
-          <ul>
-            <li><strong>物理層（改檔、跑測試、整理報告）：</strong>可以交給 Agent 執行，改錯了還有 <code>git revert</code> 可以退回。</li>
-            <li><strong>概念層（這個實驗算什麼、邊界在哪、什麼時候升級）：</strong>必須留在人手裡。Agent 只能驗證事實、列候選選項，不能把未經拍板的假設直接寫成預設前提。</li>
-          </ul>
-
-          <h2>二、我後來固定下來的三角分工：釐清 → 拍板 → 執行</h2>
-          <p>實際跑過幾十個 Session 後，我發現執行力特別強的模型（像是 Claude）有個很明顯的慣性：給它一個方向，它會衝得非常快，但有時會在早期邊界沒對齊的情況下直接改完整份檔案。</p>
-          <p>所以我後來把工作習慣拆成三步：<strong>先用 Codex 幫我釐清需求、抓盲點與設定停損點 → 我自己看過拍板 → 再把清楚的範圍交給 Claude 執行。</strong></p>
-          <p>同時我也訂了一條來源溯源紀律：只要轉述另一個 Agent 的建議，就必須明標來源，不能無聲改寫成自己的結論。在整理對話紀錄時甚至出現過一個很有趣的辨識標準——<strong>「對話裡超過 10 行的工整規格通常不是我親手打的，我真實的決策信號都是 10 行以內的短句與反問。」</strong>分清這三層來源（人親打的短句、人採用的外部 Spec、平行 Agent 的建議），才不會在日後回溯決策時搞混誰才是拍板的人。</p>
-
-          <h2>三、同一個 Session 邊趕交付、邊改工具，品質一定掉</h2>
-          <p>另一個真實踩坑發生在趕一份技術文件時：我在同一個對話裡一邊改主文、一邊順手叫模型修儀表板顯示、加新的審稿 subagent、又順便存檔。結果模型在同一次對話裡連續出現三個失誤：</p>
+          <h2>後來固定下來的三條習慣</h2>
           <ol>
-            <li>儀表板上的字數標籤直接腦補（寫 <code>~2,800</code>，實測是 <code>3,213</code>）。</li>
-            <li>沒等我逐段確認，就把上一版沒審過的段落直接複製進新版。</li>
-            <li>主文裡開始混進「工具存在感」，而且出現「廠房有這套控制器，所以操作員不用重新學習」這種明顯的邏輯跳躍。</li>
+            <li><strong>先用 Codex 釐清需求，拍板後才交給 Claude 執行：</strong>Claude 的執行力很強，但給它一個模糊方向就會衝太快、順手把沒確認的邊界一起改掉。先跟 Codex 把範圍和停損點談清楚，我拍板後再讓 Claude 動手，返工少非常多。</li>
+            <li><strong>來源一定要標清楚（超過 10 行的通常不是我打的）：</strong>整理對話紀錄時發現一個很準的切分——我親手打的指令幾乎都在 10 行以內、口語、偶爾還有錯字（像 <code>dashbord</code>）；超過 10 行工整的結構通常是貼進來的 Spec 或另一個 Agent 的整理。轉述時強制標註來源，日後回查才不會把 Agent 的建議誤認成我拍板的決定。</li>
+            <li><strong>趕交付時，絕不同場改工具：</strong>有一次在同一個對話裡一邊寫正式文件、一邊順手修儀表板、建新 subagent、又跑存檔，結果當場爆出三個錯：儀表板字數標籤腦補寫 <code>~2,800</code>（實測 <code>3,213</code>）、沒經確認直接把 v1 未審段落貼進新版、內文還混進工具自吹。之後嚴格切開：改工具另開新 Session，不跟交付搶同一個 Context Window。</li>
           </ol>
-          <p>根因其實很簡單：<strong>Meta-task（改工具、設計新流程）跟 Product-task（完成交付物）都在搶同一個 Context Window 的注意力。</strong>自那之後我就立了一條鐵則：一個 Session 只做一條主軸，要做工具改造就另開新對話，絕不在趕交付時插隊改架構。</p>
 
-          <blockquote>好的多 Agent 工作流，不是讓模型自己聊成一團，而是讓每一次交接都有檔案證據、每一個停損點都由人決定。</blockquote>
+          <details>
+            <summary>展開：相關 GitHub 實驗室連結</summary>
+            <ul>
+              <li><a href="https://github.com/minxinchen/ai-workstation-handoff" target="_blank" rel="noopener noreferrer">ai-workstation-handoff ↗</a>：地端工作站多代理交接與管理規則整理</li>
+              <li><a href="https://github.com/minxinchen/context-recall-lab" target="_blank" rel="noopener noreferrer">context-recall-lab ↗</a>：跨 Session 來源檢索與版本綁定引用實驗</li>
+              <li><a href="https://github.com/minxinchen/wiki-change-impact" target="_blank" rel="noopener noreferrer">wiki-change-impact ↗</a>：唯讀知識庫變更影響分析</li>
+            </ul>
+          </details>
 
-          <div class="note-box">
-            <strong>相關公開紀錄</strong>
-            <p style="margin:6px 0 0">關於跨 Session 交接、版本綁定引用與唯讀影響分析的實驗程式，都整理在我的 GitHub：<a href="https://github.com/minxinchen/ai-workstation-handoff" target="_blank" rel="noopener noreferrer">ai-workstation-handoff ↗</a>、<a href="https://github.com/minxinchen/context-recall-lab" target="_blank" rel="noopener noreferrer">context-recall-lab ↗</a> 與 <a href="https://github.com/minxinchen/wiki-change-impact" target="_blank" rel="noopener noreferrer">wiki-change-impact ↗</a>。</p>
-          </div>
+          <p>目前這套分工還沒有完全寫死成自動化框架，依然靠幾個輕量規則跟人工拍板頂著，但至少已經不再出現「兩個 AI 聊完替我做決定」的狀況。</p>
 
           <hr class="soft-rule" style="margin:36px 0 22px">
           <a class="tiny-link" href="index.html">返回技術文章列表</a>
@@ -90,7 +78,7 @@
     <div class="container footer-inner">
       <div>
         <a class="logo" href="../index.html"><strong>nio<span>.</span>chen</strong><small>LAB &amp; NOTES</small></a>
-        <p>Built for readability &amp; verification. © 2026 Nio Chen</p>
+        <p>© 2026 Nio Chen · Built with static HTML &amp; Cloudflare Pages</p>
       </div>
       <div class="footer-links">
         <a href="../projects/index.html">作品與實驗室</a>

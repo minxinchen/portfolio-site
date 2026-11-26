@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <script>try{const s=localStorage.getItem("color-scheme");if(s==="light"||s==="dark")document.querySelector('meta[name="color-scheme"]').content=s;}catch{}</script>
-  <meta name="description" content="追蹤 GitHub AI 專案時如何避免追星盲裝？分享我從 Superpowers、pstack 與 Ponytail 等開源設計中學到的選型與適配原則。">
-  <title>GitHub 開源工具實作雷達：為什麼我看重 Superpowers、pstack 與 Ponytail 這類設計？ · Nio Chen</title>
+  <meta name="description" content="連追六期 GitHub AI 專案後，從 Superpowers、pstack 與 Ponytail 歸納出的開源工具篩選與適配紀錄。">
+  <title>連追六期 GitHub AI 專案後，我怎麼決定「不安裝」 · Nio Chen</title>
   <link rel="canonical" href="https://portfolio-site-1b8.pages.dev/journal/github-radar.html">
   <link rel="stylesheet" href="../assets/style.css">
 </head>
@@ -36,75 +36,68 @@
       <div class="reading">
         <header class="article-head">
           <a class="back-link" href="index.html">← 返回技術文章</a>
-          <p class="smallcaps" style="margin:22px 0 0">開源雷達 // OPEN SOURCE RADAR</p>
-          <h1>GitHub 開源工具實作雷達：為什麼我看重 Superpowers、pstack 與 Ponytail 這類設計？</h1>
-          <p class="lead">每天都有新的 AI 工具衝上 GitHub Trending，但 Star 數只是關注訊號，不是需求、品質或安全的證據。這篇整理我篩選開源專案的尺規，以及幾個讓我反覆借鏡的設計思路。</p>
+          <p class="smallcaps" style="margin:22px 0 0">開源雷達 // 2026-11</p>
+          <h1>連追六期 GitHub AI 專案後，我怎麼決定「不安裝」</h1>
+          <p class="lead">2026/10/30 到 11/04 跑了六期 GitHub AI 實作雷達。最後裝進工作站的工具沒幾個，但從 Superpowers、pstack、Ponytail 身上借走的設計思路，反而省了我最多時間。</p>
           <div class="article-info">
             <span>Nio Chen</span>
-            <span>2026-11</span>
             <span>分類：開源雷達</span>
+            <span>狀態：實作選型紀錄</span>
           </div>
         </header>
 
         <article class="article-prose">
-          <p>追蹤 GitHub 生態系很容易掉進「新工具收藏癖」：看到社群轉發、Star 數飆升，就想把整套框架裝進自己的工作站。但實作過幾個專案後會發現，<strong>多裝一套自己沒摸透的架構，往往比自己手管幾個簡單規則更花維護成本。</strong></p>
-          <p>2026 年 10 月底到 11 月初，我幫自己跑了六期「GitHub AI 實作雷達」研究郵件，核心目標不是整理熱榜，而是回答一個務實問題：<strong>這個專案解決的痛點，真的值得我動手試一遍嗎？如果試完沒有比較好，我能不能乾脆不安裝？</strong></p>
+          <p>多裝一套自己沒摸透的 Agent 框架，通常只會換來多一層要修的設定檔。追完六期 GitHub 專案後，我發現自己最常做的決定其實是「看懂思路，但不裝整套工具」。</p>
 
-          <h2>一、三個讓我印象深刻的開源設計思路</h2>
-          <p>在看過一批 Agent 框架與工作流專案後，我特別欣賞的往往不是功能最花俏的大平台，而是把「紀律、邊界、輕量化」想得很清楚的工具：</p>
-
+          <h2>幾個值得拆開看的專案</h2>
           <div class="data-table">
             <table>
               <thead>
                 <tr>
-                  <th>關注對象</th>
-                  <th>我欣賞的設計核心</th>
-                  <th>實際帶進自己工作流的做法</th>
+                  <th>專案</th>
+                  <th>吸引我的設計點</th>
+                  <th>我實際拿來怎麼用</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
                   <td><strong>Superpowers</strong></td>
-                  <td>把工程紀律（先規劃、測試先行、驗證再宣告完成）蒸餾成可重複調用的 Skill，而不是每次靠臨場長 Prompt 碰運氣。</td>
-                  <td>檢視哪些規則適合蒸餾成獨立 Skill，避免把所有行為規範塞爆主記憶檔。</td>
+                  <td>把規劃、測試、驗證拆成可重複調用的 Skill，不靠臨場長 Prompt 碰運氣。</td>
+                  <td>檢視哪些重複規範應該獨立成 Skill，避免主記憶檔越塞越大。</td>
                 </tr>
                 <tr>
                   <td><strong>pstack</strong></td>
-                  <td>把 Prototype（先驗證資料與可行性）跟 Feature 實作、獨立驗收拆開，避免還沒確認資料拿不拿得到就先寫一堆介面。</td>
-                  <td>做 <a href="../projects/wp-search-lab.html">WP Search Lab</a> 時直接讀取原始規範並誠實適配到 Codex 環境——先跑 CORS 原型確認瀏覽器阻擋邊界，再決定採 HTML 匯入與代理架構。</td>
+                  <td>把 Prototype（先測資料拿不拿得到）和 Feature 實作、驗收明確拆開。</td>
+                  <td>做 <a href="../projects/wp-search-lab.html">WP Search Lab</a> 時直接讀原始規範適配到 Codex：先跑 CORS 原型，確認未開跨來源的網站會被瀏覽器擋，直接定調以 HTML 匯入為離線核心。</td>
                 </tr>
                 <tr>
                   <td><strong>Ponytail</strong></td>
-                  <td>核心問題很尖銳：<strong>能不能減少不必要的工程？</strong>在引入新工具之前，先問現有能力重用是否就夠了。</td>
-                  <td>把「不建立無必要 Framework」寫成專案前提；像 WP Search Lab 直接輸出可離線運作的單檔 HTML，減少部署依賴。</td>
+                  <td>核心立場很直白：先問現有工具重用夠不夠，盡量減少不必要工程。</td>
+                  <td>拿掉多餘框架，讓 WP Search Lab 直接打包成單檔離線 HTML，零建置即可打開。</td>
                 </tr>
                 <tr>
-                  <td><strong>Claude-Mem / Lightpanda 等</strong></td>
-                  <td>分別切中跨 Session 狀態檢索與輕量瀏覽器執行環境兩個真實痛點。</td>
-                  <td>不看宣傳延遲數字，而是把焦點放在對照問題：省了 Token 後，會不會更容易引用過期版本？速度變快後，擷取欄位會不會變缺？</td>
+                  <td><strong>Claude-Mem / Lightpanda</strong></td>
+                  <td>分別對應跨 Session 檢索與輕量瀏覽器執行環境。</td>
+                  <td>列入觀察清單，重點看副作用：省 Token 後會不會抓到舊版本？跑更快之後擷取欄位會不會缺？</td>
                 </tr>
               </tbody>
             </table>
           </div>
 
-          <h2>二、我現在怎麼篩選一個開源專案？</h2>
-          <p>比起看「總 Star 數」或轉發貼文，我會先做四件低成本查核：</p>
+          <h2>決定要不要動手試的四個檢查點</h2>
           <ol>
-            <li><strong>先看授權與依賴清不清楚：</strong>如果要整合進自己的工具，MIT / Apache-2.0 / BSD-2-Clause 的授權文字有沒有看對？我在做 WP Search Lab 時就曾抓到依賴套件 <code>entities</code> 的授權文字標錯，這種細節不在第一時間核對，後面很容易踩雷。</li>
-            <li><strong>區分「同窗口比較」與「無法比較」：</strong>在追蹤熱度時，一定要看相同起訖日期的 7 日變化（<code>Δ7d</code>），沒有同窗口快照就老實標「無法計算」，不拿總 Stars 充數。</li>
-            <li><strong>問清楚基準組是什麼：</strong>新工具號稱快 3 倍、省 50% Token，但對照的是什麼輸入？如果品質或正確率掉下來，速度就沒有意義。</li>
-            <li><strong>允許「試完決定不用」：</strong>一個好的技術調研，最後結論完全可以是「這個思路值得借鏡，但不需要裝整套工具」。以 pstack 為例，在沒有 Cursor 原生 Agent 的環境裡，我選擇讀取它的原始規範並揭露環境差異做適配，而不是硬搬整套設定。</li>
+            <li><strong>先核對依賴與授權：</strong>要整合進工具的套件，先看清楚 MIT、Apache-2.0、BSD-2-Clause。做 WP Search Lab 時就抓到 <code>entities</code> 的授權文字標錯，這種小錯第一輪沒修，後面很容易遺漏。</li>
+            <li><strong>沒有同窗口快照，就不要比熱度：</strong>追蹤 7 日 Star 變化（<code>Δ7d</code>）一定要同起訖日期；缺資料就標「無法計算」，不拿總 Stars 硬排。</li>
+            <li><strong>先定對照組再看效能宣稱：</strong>宣稱快幾倍或省多少 Token，若沒有固定同一批輸入、也沒確認輸出正確率沒掉，數字就沒有參考價值。</li>
+            <li><strong>能借思路就不硬搬環境：</strong>像 pstack 原本針對 Cursor Agent 設計，在我當下的 Codex 環境沒有對應原生 Agent 類型，直接讀原規範並標明環境差異適配，比硬套外掛乾淨得多。</li>
           </ol>
 
-          <blockquote>工具應該服務問題，而不是為了使用某個熱門框架，反過來重新定義自己的問題。</blockquote>
+          <details>
+            <summary>展開：這份觀察的證據範圍</summary>
+            <p>pstack 規範適配，以及 parse5、@mozilla/readability、robots-parser 整合已經在 WP Search Lab 實測並納入 42 項自動化測試。Claude-Mem 與 Lightpanda 的對照目前仍停留在實驗設計階段，尚未跑完跨工具基準測試。</p>
+          </details>
 
-          <div class="note-box">
-            <strong>證據邊界說明</strong>
-            <p style="margin:6px 0 0">本文整理自 2026/10–11 六期個人研究郵件與 WP Search Lab 實際選型紀錄。文中提及的 pstack 規範適配與 parse5／Readability／robots-parser 整合已經過實測；其餘如瀏覽器引擎與記憶工具的 A/B 比較，多數仍屬實驗設計與選題觀察，不代表已完成跨工具基準跑分。</p>
-          </div>
-
-          <h2>三、延伸閱讀</h2>
-          <p>如果你對我如何把這套「GitHub 雷達」跟每日學習排程拆成兩條有品質關卡的管線有興趣，可以接著看下一篇：<a href="ai-research-workflow.html">《把每日技術追蹤拆成兩條管線：GitHub 雷達 × AIoT 微課的 Workflow 設計》</a>。</p>
+          <p>把這套「GitHub 雷達」拆成可重複執行的雙管線設計，整理在下一篇：<a href="ai-research-workflow.html">《單一 Prompt 排程壞掉之後：我怎麼把技術日報拆成雙管線》</a>。</p>
 
           <hr class="soft-rule" style="margin:36px 0 22px">
           <a class="tiny-link" href="index.html">返回技術文章列表</a>
@@ -117,7 +110,7 @@
     <div class="container footer-inner">
       <div>
         <a class="logo" href="../index.html"><strong>nio<span>.</span>chen</strong><small>LAB &amp; NOTES</small></a>
-        <p>Built for readability &amp; verification. © 2026 Nio Chen</p>
+        <p>© 2026 Nio Chen · Built with static HTML &amp; Cloudflare Pages</p>
       </div>
       <div class="footer-links">
         <a href="../projects/index.html">作品與實驗室</a>

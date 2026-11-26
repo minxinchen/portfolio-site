@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <script>try{const s=localStorage.getItem("color-scheme");if(s==="light"||s==="dark")document.querySelector('meta[name="color-scheme"]').content=s;}catch{}</script>
-  <meta name="description" content="從 KIYAN 行動版首頁 Mobile LCP 13.10s→2.72s 的隔離試驗，談 B2B 技術網站的效能查核、雙路徑競品驗證與邏輯邊界。">
-  <title>不是先改整個網站，而是先找出瓶頸：B2B 網站效能隔離測試與內容查核 · Nio Chen</title>
+  <meta name="description" content="KIYAN 比例閥網站行動版首頁 Mobile LCP 從 13.10s 壓到 2.72s 的隔離測試紀錄，與 B2B 技術內容查核筆記。">
+  <title>只動首屏就把 Mobile LCP 從 13.1s 壓到 2.7s：KIYAN 隔離測試筆記 · Nio Chen</title>
   <link rel="canonical" href="https://portfolio-site-1b8.pages.dev/journal/kiyan-experiment.html">
   <link rel="stylesheet" href="../assets/style.css">
 </head>
@@ -37,50 +37,42 @@
         <header class="article-head">
           <a class="back-link" href="index.html">← 返回技術文章</a>
           <p class="smallcaps" style="margin:22px 0 0">驗證與實測 // B2B SEO &amp; PERFORMANCE</p>
-          <h1>不是先改整個網站，而是先找出瓶頸：B2B 網站效能隔離測試與內容查核</h1>
-          <p class="lead">做 B2B 工業網站優化與技術內容時，最常見的浪費是「還沒找到真瓶頸就先全站大改」，以及「把漂亮術語當成可驗證證據」。這篇整理我在效能隔離與內容查核上的實戰做法。</p>
+          <h1>只動首屏就把 Mobile LCP 從 13.1s 壓到 2.7s：KIYAN 隔離測試筆記</h1>
+          <p class="lead">處理 KIYAN 比例閥三語網站時，手機首頁載入卡在 13.10 秒。沒有先換主機或裝一堆外掛，先只替換首屏做隔離測試，數字直接掉到 3.16 秒。</p>
           <div class="article-info">
             <span>Nio Chen</span>
             <span>2026-05</span>
-            <span>分類：驗證與實測</span>
             <span>Repo：<a href="https://github.com/minxinchen/seo-aio-b2b-case-study" target="_blank" rel="noopener noreferrer" style="color:var(--accent)">seo-aio-b2b-case-study ↗</a></span>
           </div>
         </header>
 
         <article class="article-prose">
-          <p>當一個 B2B 工業網站行動版首頁載入超過 10 秒，多數人的第一個反應是「換主機」、「買快取外掛」或「整站重寫」。但全面修改不只成本高，更麻煩的是改完之後，你根本不知道是哪一項調整真正起作用。</p>
-
-          <h2>一、先隔離單一變因，再決定正式上線範圍</h2>
-          <p>在 <a href="../projects/kiyan.html">KIYAN 比例閥網站</a> 的行動版首屏優化裡，我先盤點了主機回應、首頁 Slider、圖片體積、JavaScript 與快取等可能變因，但沒有一次全動，而是先做一個最小隔離實驗：盡量不改其他頁面結構，只替換首屏呈現方式來驗證瓶頸。</p>
-
           <div class="case-graphic">
-            <div style="font-family:var(--mono);font-size:11.5px;color:var(--accent-dark);margin-bottom:10px">CASE RECORD // MOBILE LCP ISOLATION TEST</div>
+            <div style="font-family:var(--mono);font-size:11.5px;color:var(--accent-dark);margin-bottom:10px">KIYAN // MOBILE LCP ISOLATION RECORD</div>
             <div style="display:flex;justify-content:space-between;gap:8px;align-items:baseline;font-family:var(--mono);font-weight:700;font-size:clamp(18px,3vw,28px)">
               <span>13.10s</span><span>→</span><span>3.16s</span><span>→</span><span>2.72s</span>
             </div>
             <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:11.5px;color:var(--inv-mute);margin-top:6px">
-              <span>調整前</span><span>隔離試驗</span><span>正式修改</span>
+              <span>調整前</span><span>只替換首屏（隔離試驗）</span><span>正式調整</span>
             </div>
           </div>
 
-          <p>確認首屏就是最大瓶頸後，再投入正式調整，把 Mobile LCP 從 13.10 秒降到 3.16 秒（隔離測試），正式調整後約 2.72 秒。這個順序的價值在於：用最小的風險先證明方向對了，才去動正式站。</p>
+          <p>一開始列出的嫌疑清單有主機回應、首頁 Slider、圖片體積、JavaScript 與快取。如果一次全改，成本高又找不到真正的元兇。我先開一個只動首屏的對照測試，確認光是拿掉沉重的首屏載入就把 LCP 壓掉將近 10 秒，才正式動網站上線，最終落點約 2.72 秒。</p>
 
-          <h2>二、B2B 技術內容與 AI 輔助最常踩的三個假象</h2>
-          <p>除了載入速度，我在整理工業產品規格、多語系頁面與商業競品研究時，也反覆看到 AI 輔助內容最容易翻車的三個地方：</p>
-          <ol>
-            <li><strong>只看官方說法，沒做雙路徑交叉驗證：</strong>只讀官網型錄或規格表，每家看起來都很完美；把官方文件跟經銷商、論壇、二手機市場的民間回饋放在一起比，才能看出「官方承諾」與「實際停機／服務落差」在哪裡。</li>
-            <li><strong>把還沒自動化的未來式寫成現在式：</strong>如果一套流程目前是「分流與覆核已上線、根因分析仍由人工整合」，誠實把這句話放在流程說明裡面，反而比用一堆漂亮術語包裝更經得起客戶或評審追問。</li>
-            <li><strong>存在性不等於能力（邏輯跳躍）：</strong>看過最典型的一句錯誤推論是「客戶廠房裡已經有某牌設備，所以操作員不用重新學習」。就像電腦裝了 Python 不代表人是 Python 工程師，<strong>存在、能力、意圖是三個完全不同的層次</strong>，技術行銷只要跨層跳躍，內行人一眼就會質疑整份資料的可信度。</li>
-          </ol>
+          <h2>順手整理的三個 B2B 內容查核坑</h2>
+          <p>做三語規格表、產品頁與競品比較時，AI 幫忙產稿速度很快，但也最容易在三個地方露餡：</p>
+          <ul>
+            <li><strong>只讀官網規格會失真：</strong>官網型錄每家都寫得完美，把官方文件跟論壇、經銷商、二手機市場的實際停機與服務回饋放在一起對照，才看得出承諾跟現場的落差。</li>
+            <li><strong>存在不等於會用：</strong>看過最離譜的自動推論是「客戶廠房裡已經有某牌控制器，所以操作員不用重新學習」。就像電腦裝了 Python 不代表人是工程師，跨層跳躍只要出現一次，內行人就不會信整頁內容。</li>
+            <li><strong>還沒自動化的步驟要直接講清楚：</strong>哪一段已上線、哪一段目前仍是人工串接，直接寫在流程裡比硬包成漂亮術語更耐得住追問。</li>
+          </ul>
 
-          <h2>三、技術完成與商業成效分開判讀</h2>
-          <p>做完效能與結構調整後，我習慣把「技術量測」和「商業成效」切開來看：Mobile LCP 改善是可立即驗證的技術事實；但搜尋引擎重新索引、不同語系的曝光起落、以及詢價轉換則是另一層指標。全站點擊上升時，依然要把特定語系曝光下降的情況單獨列出來查核，不拿單一漂亮數字掩蓋其他面向的警訊。</p>
-          <p>這套從真實 B2B 現場累積出來的檢查習慣，後來也直接變成我做 <a href="../tools/wp-search-lab/">WP Search Lab</a> 的設計底層——不只列出問題，更要把「可驗證證據」和「能力邊界」寫清楚。</p>
+          <p>這套從真實網站踩出來的查核習慣，後來也直接帶進了 <a href="../tools/wp-search-lab/">WP Search Lab</a>。</p>
 
-          <div class="note-box">
-            <strong>數據註記</strong>
-            <p style="margin:6px 0 0">Mobile LCP 數字（13.10s → 3.16s → 2.72s）取自既有 KIYAN 案例量測紀錄，不代表本文重新執行即時 Live Lighthouse 測試，亦不直接推論搜尋排名或營收成長的因果關係。更多可重算的 B2B SEO × AIO 資料與驗證腳本見 <a href="https://github.com/minxinchen/seo-aio-b2b-case-study" target="_blank" rel="noopener noreferrer">seo-aio-b2b-case-study ↗</a>。</p>
-          </div>
+          <details>
+            <summary>展開：量測數據範圍說明</summary>
+            <p>Mobile LCP 數字（13.10s → 3.16s → 2.72s）來自既有 <a href="../projects/kiyan.html">KIYAN 案例量測紀錄</a>，不代表目前即時 Lighthouse 數值；頁面速度改善屬於技術指標，不能直接推論成搜尋排名或詢價成長的單一因果。</p>
+          </details>
 
           <hr class="soft-rule" style="margin:36px 0 22px">
           <a class="tiny-link" href="index.html">返回技術文章列表</a>
@@ -93,7 +85,7 @@
     <div class="container footer-inner">
       <div>
         <a class="logo" href="../index.html"><strong>nio<span>.</span>chen</strong><small>LAB &amp; NOTES</small></a>
-        <p>Built for readability &amp; verification. © 2026 Nio Chen</p>
+        <p>© 2026 Nio Chen · Built with static HTML &amp; Cloudflare Pages</p>
       </div>
       <div class="footer-links">
         <a href="../projects/index.html">作品與實驗室</a>
