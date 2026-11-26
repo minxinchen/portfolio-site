@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <script>try{const s=localStorage.getItem("color-scheme");if(s==="light"||s==="dark")document.querySelector('meta[name="color-scheme"]').content=s;}catch{}</script>
+  <meta name="description" content="如何把每日技術追蹤拆成 GitHub 雷達與 AIoT 微課兩條獨立生產線，並設計 4 道 Quality Gate 與最小持久化結構。">
+  <title>把每日技術追蹤拆成兩條管線：GitHub 雷達 × AIoT 微課的 Workflow 設計 · Nio Chen</title>
+  <link rel="canonical" href="https://portfolio-site-1b8.pages.dev/journal/ai-research-workflow.html">
+  <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container head-inner">
+      <a class="logo" href="../index.html" aria-label="Nio 首頁"><strong>nio<span>.</span>chen</strong><small>LAB &amp; NOTES</small></a>
+      <nav class="site-nav" id="main-nav" aria-label="主選單">
+        <a href="../index.html">首頁</a>
+        <a href="../projects/index.html">作品與實驗室</a>
+        <a href="../journal/index.html" aria-current="page">技術文章</a>
+        <a href="../about.html">關於</a>
+        <a class="nav-contact" href="../about.html#contact">聯絡 ↗</a>
+      </nav>
+      <div class="head-tools">
+        <button class="theme-toggle" type="button" data-theme-toggle aria-label="切換深色或淺色模式">
+          <span class="mode-dark"><span aria-hidden="true">☾</span><span>深色</span></span>
+          <span class="mode-light"><span aria-hidden="true">☀</span><span>淺色</span></span>
+        </button>
+        <button class="menu-toggle" type="button" data-menu aria-expanded="false" aria-controls="main-nav">選單</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <div class="reading">
+        <header class="article-head">
+          <a class="back-link" href="index.html">← 返回技術文章</a>
+          <p class="smallcaps" style="margin:22px 0 0">AI 工作流 // WORKFLOW BLUEPRINT v1.0</p>
+          <h1>把每日技術追蹤拆成兩條管線：GitHub 雷達 × AIoT 微課的 Workflow 設計</h1>
+          <p class="lead">如果把「追新開源專案」跟「每天學一個 AIoT 基礎觀念」塞進同一個大 Prompt 跑排程，很快就會遇到資料不可比、課程重複寄送、失敗卻回報成功等問題。這篇拆解我如何把它改畫成雙管線藍圖。</p>
+          <div class="article-info">
+            <span>Nio Chen</span>
+            <span>2026-11</span>
+            <span>分類：AI 工作流</span>
+          </div>
+        </header>
+
+        <article class="article-prose">
+          <p>一開始我只是用每日定時任務寄給自己一封技術摘要信，連續收了六期之後，很快就看到單一 Prompt 排程的極限：有時候它會把沒抓到 7 日快照的專案混進排行，有時候會把「實驗構想」寫得像「已經跑完的實測」，遇到寄信失敗也沒有乾淨的重試與去重紀錄。</p>
+          <p>所以我先停掉排程，把整件事重構成一份可交給 Codex 或 Claude Code 實作的 <strong>Workflow Blueprint（v1.0）</strong>：核心想法是「分流處理、合流審查、失敗不偽造完成」。</p>
+
+          <h2>一、雙管線架構：分流產出，合流審查</h2>
+          <p>每天觸發時，Orchestrator 先產生當日 Run ID 並檢查是否已經寄出（防重複），接著同時啟動 A、B 兩條互不干擾的生產線，最後在 Quality Gate 合流：</p>
+
+          <div class="flow-grid">
+            <div class="flow-node">
+              <div class="tag">PIPELINE A // GITHUB RADAR</div>
+              <strong>1. 發現候選 → 2. 查證來源 → 3. 評分 → 4. 拆 Case Study</strong>
+              <p>去除歷史已推薦與疑似灌星專案；核對 README、commits 與同窗口 7 日 Star 變化；以 Star 速度 50% / 加速度 20% / 落地 15% / 適配 10% / 維護安全 5% 篩出 2–4 項，最後深入拆解一個可驗收 MVP 提案。</p>
+            </div>
+            <div class="flow-node earth">
+              <div class="tag">PIPELINE B // AIoT MICRO-LESSON</div>
+              <strong>1. 讀進度 → 2. 每日一課 → 3. 無硬體練習 → 4. 接回 Agent</strong>
+              <p>依進度表（Day 1 概念一路到 Day 11 工業應用）選下一個未完成單元；限制 200–350 字、3–5 分鐘讀完；設計不需買硬體的模擬思考題，並明確區分「固定閾值規則」與「真正的 AI 推論」。</p>
+            </div>
+          </div>
+
+          <h2>二、四道明確的 Quality Gate</h2>
+          <p>很多 AI 自動化最容易出錯的地方不在生成，而在「沒有明確說什麼條件算不通過」。這份藍圖把審查拆成四道具體關卡：</p>
+          <ul>
+            <li><strong>Gate 1｜Star 資料是否可比較？</strong> 必須有相同起訖日期的逐日快照才算 <code>Δ7d</code> 與日均增速；缺少相鄰同長度窗口就標「無法計算」，絕不拿總 Stars 替代，缺資料的專案只作質性介紹、不混入數值排名。</li>
+            <li><strong>Gate 2｜Case Study 是否真的可驗收？</strong> 每個提案都要寫清基準組、實驗組、輸入輸出與失敗條件；未實作的內容一律標記為「設計構想」，優先挑本機可跑的小型 MVP。</li>
+            <li><strong>Gate 3｜AIoT 課程是否對齊初學者？</strong> 每次只教一個新概念；不因為掛了「智慧」兩個字就把固定閾值自動化稱為 AI。</li>
+            <li><strong>Gate 4｜寄送失敗如何處理？</strong> 寄出前先查當日寄送紀錄防重複；HTML 失敗保留草稿並標記失敗；只有拿到郵件服務可靠回傳的 Message ID，才允許把當日狀態更新為已寄送。</li>
+          </ul>
+
+          <h2>三、最小持久化資料結構</h2>
+          <p>為了讓每次執行都可追溯、跨日不失憶，藍圖先定義了最小檔案結構（刻意不先上資料庫，純 JSON / YAML / HTML 就能用 Git 追蹤）：</p>
+
+          <pre><code>workflow/
+  config.yaml             # 排程、主題、評分權重、收件設定
+  runs/YYYY-MM-DD.json    # 每次執行狀態、錯誤與郵件 ID
+  sources/                # Star 快照、README 來源與時間戳
+  history/repos.json      # 已推薦專案清單，避免重複
+  lessons/progress.json   # AIoT 已完成課程進度（目前至 Day 3）
+  reports/YYYY-MM-DD.html # 寄送前的 HTML 電子報產物
+  evaluations/            # Quality Gate 審查結果與失敗原因</code></pre>
+
+          <div class="note-box">
+            <strong>現況與誠實邊界</strong>
+            <p style="margin:6px 0 0">這份文件是 <strong>Workflow Blueprint（設計規格）</strong>，不是已經 24 小時全自動跑在伺服器上的程式。2026/10/30–11/04 期間確實產出並寄出了 6 期個人研究電子報（包含 AIoT Day 1–3），但定時排程目前已暫停，未來部署時會依這份規格逐項補齊自動化去重與重試測試。</p>
+          </div>
+
+          <hr class="soft-rule" style="margin:36px 0 22px">
+          <a class="tiny-link" href="index.html">返回技術文章列表</a>
+        </article>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div>
+        <a class="logo" href="../index.html"><strong>nio<span>.</span>chen</strong><small>LAB &amp; NOTES</small></a>
+        <p>Built for readability &amp; verification. © 2026 Nio Chen</p>
+      </div>
+      <div class="footer-links">
+        <a href="../projects/index.html">作品與實驗室</a>
+        <a href="../journal/index.html">技術文章</a>
+        <a href="../about.html">關於</a>
+        <a href="https://github.com/minxinchen" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+      </div>
+    </div>
+  </footer>
+  <script defer src="../assets/site.js"></script>
+</body>
+</html>

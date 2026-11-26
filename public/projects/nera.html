@@ -1,1 +1,134 @@
-<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="theme-color" content="#fcfaf6"><meta name="description" content="從目標拆解到證據驗證，探索 Agent 如何在有限授權下持續協作。"><title>NERA／九衡 · Nio</title><link rel="stylesheet" href="../assets/style.css"></head><body><header class="site-header"><div class="container head-inner"><a class="logo" href="../index.html" aria-label="Nio 首頁"><strong>Nio<span>.</span></strong><small>MINXIN CHEN</small></a><button class="menu-toggle" data-menu aria-expanded="false" aria-controls="main-nav">選單</button><nav class="site-nav" id="main-nav" aria-label="主選單"><a href="../index.html">首頁</a><a href="../projects/index.html" aria-current="page">作品</a><a href="../journal/index.html">文章</a><a href="../about.html">關於</a><a class="nav-contact" href="../about.html#contact">聯絡我 ↗</a></nav></div></header><main><div class="container"><div class="case-header"><div><a class="back-link" href="index.html">← 返回作品</a><p style="margin-top:18px" class="smallcaps">AI Agent 治理研究</p><h1>NERA／九衡</h1><p>從目標拆解到證據驗證，探索 Agent 如何在有限授權下持續協作。</p><div class="case-meta"><span class="pill">研究進行中</span><span class="pill">Case Study</span></div></div><div class="case-art" aria-hidden="true"><span>N.</span></div></div><div class="case-stats"><div class="case-stat"><div class="stat-label">研究場景</div><strong>TCGA-KIRC 生醫資料</strong></div><div class="case-stat"><div class="stat-label">治理對象</div><strong>Goal、Review、Evidence</strong></div><div class="case-stat"><div class="stat-label">現況</div><strong>科學方法審查未完成</strong></div></div><div class="case-layout"><nav class="case-sidebar" aria-label="案例章節"><a href="#1">01 · 原始問題</a><a href="#2">02 · 做法</a><a href="#3">03 · 實際進展</a><a href="#4">04 · 仍待驗證</a></nav><div class="case-content"><section id="1"><h2>原始問題</h2><p>Agent 可以快速產出計畫，但不一定保留原始目標、停止條件與審查責任。跨 Session 交接時，誤解可能進一步擴大。</p></section><section id="2"><h2>做法</h2><p>以中心 Goal 為起點，允許有界拆解；每一個子任務需回到父目標的驗收。將審查意見、Lead 裁決、證據來源與人類授權分開處理。</p><div class="visual-panel dark"><p style="margin:0 0 14px;color:#f8efe8;font-weight:700">設計上的核心區分</p><div class="steps"><div class="step"><span>01</span><strong>人類 Goal</strong></div><div class="step"><span>02</span><strong>Agent 展開</strong></div><div class="step"><span>03</span><strong>Reviewer</strong></div><div class="step"><span>04</span><strong>證據與授權</strong></div></div><p style="font-size:12px;margin:15px 0 0">這是治理概念圖，不代表所有關卡已經部署為可執行服務。</p></div></section><section id="3"><h2>實際進展</h2><p>NERA 目前為獨立雲端研究專案，使用 ChatGPT Lead 與使用者轉交的平行 Reviewer。曾針對規則檢查設計並執行測試，也透過變異測試發現特定規則可能在移除後仍未被擋下。</p></section><section id="4"><h2>仍待驗證</h2><p>測試通過不代表所有規則都被有效強制執行。現有雲端對話沒有自動化的全域機械 Gate；醫療研究的科學方法審核仍待合格人類審查者處理。</p></section><div class="cta" style="margin:27px 0 58px"><div><h2 style="font-size:24px">從這個案例，繼續看更多問題。</h2><p>下一篇研究、實驗或實務紀錄，正在陸續整理。</p></div><a class="round-link" href="../journal/index.html">閱讀技術文章 ↗</a></div></div></div></div></main><footer class="footer"><div class="container footer-inner"><div><a class="logo" href="../index.html"><strong>Nio<span>.</span></strong><small>MINXIN CHEN</small></a><p>研究、創作與持續修正。© 2026 Nio Chen</p></div><div class="footer-links"><a href="../projects/index.html">作品</a><a href="../journal/index.html">文章</a><a href="../about.html">關於</a><a href="https://github.com/minxinchen" target="_blank" rel="noopener noreferrer">GitHub ↗</a></div></div></footer><script defer src="../assets/site.js"></script></body></html>
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <script>try{const s=localStorage.getItem("color-scheme");if(s==="light"||s==="dark")document.querySelector('meta[name="color-scheme"]').content=s;}catch{}</script>
+  <meta name="description" content="NERA／九衡：TCGA-KIRC（N=524）資料來源稽核、Python/R 存活交叉驗證，以及 Agent 有限授權與證據治理紀錄。">
+  <title>NERA／九衡 · Nio Chen</title>
+  <link rel="canonical" href="https://portfolio-site-1b8.pages.dev/projects/nera.html">
+  <meta property="og:title" content="NERA／九衡 · Nio Chen">
+  <meta property="og:description" content="TCGA-KIRC 524 人公開臨床資料稽核、CP04 v2 交叉驗證陰性結論與多代理有限授權研究。">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://portfolio-site-1b8.pages.dev/projects/nera.html">
+  <meta property="og:image" content="https://portfolio-site-1b8.pages.dev/assets/og-card.png">
+  <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container head-inner">
+      <a class="logo" href="../index.html" aria-label="Nio 首頁"><strong>nio<span>.</span>chen</strong><small>LAB &amp; NOTES</small></a>
+      <nav class="site-nav" id="main-nav" aria-label="主選單">
+        <a href="../index.html">首頁</a>
+        <a href="../projects/index.html" aria-current="page">作品與實驗室</a>
+        <a href="../journal/index.html">技術文章</a>
+        <a href="../about.html">關於</a>
+        <a class="nav-contact" href="../about.html#contact">聯絡 ↗</a>
+      </nav>
+      <div class="head-tools">
+        <button class="theme-toggle" type="button" data-theme-toggle aria-label="切換深色或淺色模式">
+          <span class="mode-dark"><span aria-hidden="true">☾</span><span>深色</span></span>
+          <span class="mode-light"><span aria-hidden="true">☀</span><span>淺色</span></span>
+        </button>
+        <button class="menu-toggle" type="button" data-menu aria-expanded="false" aria-controls="main-nav">選單</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <div class="case-header">
+        <div>
+          <a class="back-link" href="index.html">← 返回作品與實驗室</a>
+          <p style="margin-top:16px" class="smallcaps">BIOMEDICAL EVIDENCE × AGENT GOVERNANCE</p>
+          <h1>NERA／九衡</h1>
+          <p>以 TCGA-KIRC（N=524）真實公開臨床資料為場景，探索 Agent 如何在有限授權下進行目標拆解、平行審查與統計證據驗證。</p>
+          <div class="case-meta">
+            <span class="pill">TCGA-KIRC (N=524)</span>
+            <span class="pill">互動實驗室已上線</span>
+            <span class="pill">保留陰性結論</span>
+          </div>
+          <div class="hero-actions">
+            <a class="round-link" href="../tools/survival-evidence-lab/">開啟存活敏感度實驗室 ↗</a>
+            <a class="round-link alt" href="../journal/compression-validation.html">閱讀 AI 驗證方法筆記</a>
+          </div>
+        </div>
+        <div class="case-art" aria-hidden="true"><span>N.</span></div>
+      </div>
+
+      <div class="case-stats">
+        <div class="case-stat"><div class="stat-label">驗證資料集</div><strong>TCGA-KIRC 公開臨床資料（N=524）</strong></div>
+        <div class="case-stat"><div class="stat-label">統計驗證</div><strong>分層 Cox + R cox.zph 交叉檢查</strong></div>
+        <div class="case-stat"><div class="stat-label">關鍵結論</div><strong>CP04 v2 交叉驗證為陰性（誠實保留）</strong></div>
+      </div>
+
+      <div class="case-layout">
+        <nav class="case-sidebar" aria-label="案例章節">
+          <a href="#1">01 · 原始問題</a>
+          <a href="#2">02 · 治理與驗證做法</a>
+          <a href="#3">03 · 實際進展與互動展示</a>
+          <a href="#4">04 · 能力邊界與限制</a>
+        </nav>
+
+        <div class="case-content">
+          <section id="1">
+            <h2>原始問題</h2>
+            <p>Agent 可以很快寫出一套看似完整的分析腳本與報告，但常常在三個地方失真：忘記原始研究目標與停止條件、在跨 Session 交接時把假設當成已驗證結論，或是為了「做出顯著結果」而無意間滑向切點挑選（P-hacking）。</p>
+          </section>
+
+          <section id="2">
+            <h2>治理與驗證做法</h2>
+            <p>以中心 Goal 為起點，允許有界拆解，但每個子任務都必須回到父目標驗收。審查意見、Lead 裁決、官方資料來源收據（source receipt）與人類授權明確分離；生醫分析端則同時用 Python 與 R（<code>cox.zph</code> 等假設檢定）做交叉核對。</p>
+            <div class="visual-panel dark">
+              <p style="margin:0 0 14px;font-weight:700;color:var(--inv-ink)">治理與證據鏈設計</p>
+              <div class="steps">
+                <div class="step"><span>01</span><strong>人類 Goal</strong></div>
+                <div class="step"><span>02</span><strong>有界拆解</strong></div>
+                <div class="step"><span>03</span><strong>獨立 Reviewer</strong></div>
+                <div class="step"><span>04</span><strong>實測與授權</strong></div>
+              </div>
+              <p style="font-size:12.5px;margin:14px 0 0">註：這是治理與驗證流程設計，不代表所有關卡已部署為無人值守的自動化服務。</p>
+            </div>
+          </section>
+
+          <section id="3">
+            <h2>實際進展與互動展示</h2>
+            <p>在 TCGA-KIRC 524 位腎細胞癌公開臨床資料上，我們完成了官方來源稽核、分層存活分析與 CP04 v2 交叉驗證，並把結果做成純靜態預計算的互動工具——你可以直接在 <a href="../tools/survival-evidence-lab/" style="color:var(--accent);text-decoration:underline;text-underline-offset:3px">TCGA-KIRC 存活敏感度實驗室</a> 拖動年齡切點，親眼觀察單一指標如何因為切點挑選產生假象，並查看 CP04 v2 交叉驗證的陰性結論。</p>
+            <p>在治理測試端，也透過破壞／變異測試（刻意移除部分規則檢查）發現某些規則在移除後仍未被既有測試擋下，將這些缺口保留為後續修正線索，而非包裝成 100% 通過率。</p>
+          </section>
+
+          <section id="4">
+            <h2>能力邊界與限制</h2>
+            <p>本專案的互動展示與分析僅供統計方法教學、資料查核與作品展示，<strong>不構成臨床建議，亦未宣稱已通過正式醫學同儕審查</strong>。既有雲端協作流程仍依賴人工把關關鍵 Gate，無法取代合格領域專家的科學審查。</p>
+          </section>
+
+          <div class="cta" style="margin:24px 0 48px">
+            <div>
+              <h2>直接進實驗室拖動切點看資料</h2>
+              <p>純靜態預計算、免登入，包含 KM 存活曲線與 CP04 v2 交叉驗證森林圖。</p>
+            </div>
+            <a class="round-link" href="../tools/survival-evidence-lab/">開啟存活敏感度實驗室 ↗</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div>
+        <a class="logo" href="../index.html"><strong>nio<span>.</span>chen</strong><small>LAB &amp; NOTES</small></a>
+        <p>Built for readability &amp; verification. © 2026 Nio Chen</p>
+      </div>
+      <div class="footer-links">
+        <a href="../projects/index.html">作品與實驗室</a>
+        <a href="../journal/index.html">技術文章</a>
+        <a href="../about.html">關於</a>
+        <a href="https://github.com/minxinchen" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+      </div>
+    </div>
+  </footer>
+  <script defer src="../assets/site.js"></script>
+</body>
+</html>

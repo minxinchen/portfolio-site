@@ -1,7 +1,105 @@
-<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="theme-color" content="#fcfaf6"><meta name="description" content="從對話交接失真，談專案狀態、權威來源與執行環境的角色。"><title>換了一個 Session，決策還留得住嗎？ · Nio</title><link rel="stylesheet" href="../assets/style.css"></head><body><header class="site-header"><div class="container head-inner"><a class="logo" href="../index.html" aria-label="Nio 首頁"><strong>Nio<span>.</span></strong><small>MINXIN CHEN</small></a><button class="menu-toggle" data-menu aria-expanded="false" aria-controls="main-nav">選單</button><nav class="site-nav" id="main-nav" aria-label="主選單"><a href="../index.html">首頁</a><a href="../projects/index.html">作品</a><a href="../journal/index.html" aria-current="page">文章</a><a href="../about.html">關於</a><a class="nav-contact" href="../about.html#contact">聯絡我 ↗</a></nav></div></header><main><div class="container"><div class="reading"><header class="article-head"><a class="back-link" href="index.html">← 返回文章列表</a><p class="smallcaps" style="margin:27px 0 0">AGENT / NIO'S JOURNAL</p><h1>換了一個 Session，決策還留得住嗎？</h1><p class="lead">從對話交接失真，談專案狀態、權威來源與執行環境的角色。</p><div class="article-info"><span>Nio Chen</span><span>研究筆記 · 草稿</span><span>繁體中文</span></div></header><article class="article-prose"><p>在雲端對話中推進長期專案，有時候最困難的不是回答問題，而是下一段對話能不能正確接住上一段的決策。</p>
-<h2>為什麼一份 Handoff 還是不夠？</h2><p>交接文件能幫助新的 Agent 快速理解背景，但它本質上是對歷史狀態的摘要。摘要可能遺漏限制、混淆已完成與待驗證的工作，也可能把上一輪的推測誤認成已授權的決定。</p><p>跨對話記憶能減少這些問題，卻不能保證每次取回的都是正確版本，更不能替代實際測試。</p>
-<blockquote>交接摘要提供理解；權威狀態與驗收紀錄，應該另外保存。</blockquote>
-<h2>把推理與執行環境分開</h2><p>對 NERA 而言，一個值得探索的方向，不是把大型模型下載到本機，而是將專案的規則、版本、原始資料、測試與執行工具置於可持續存取的工作環境。Agent 仍然可以使用雲端 SaaS 模型，但新 Session 應讀取同一套專案事實。</p><p>這並不會自動解決所有問題。規則檢查器本身仍可能有缺漏，Reviewer 也未必真正獨立。相較於只靠自然語言報告，它至少使部分問題具備可重跑與可核對的條件。</p>
-<h2>驗證需要驗證自己</h2><p>一組測試全部通過，並不代表規則不會被繞過。刻意修改比較運算、邏輯關係或移除規則檢查，再觀察測試是否能辨識破壞，是一種重新檢查測試有效性的方式。</p><p>近期 NERA 的破壞測試摘要揭露過規則移除仍可能未被測試擋下的情況。這應被視為後續改善的線索，而不是另一個值得包裝成績效數字的指標。</p>
-<div class="note-box"><strong>本文狀態</strong><p style="margin:6px 0 0">這是一篇基於實際討論與專案紀錄整理的研究筆記，並非已完成的跨平台實驗報告。NERA 搬遷本機後的驗證結果尚未在本文宣稱完成。</p></div>
-<h2>下一個合理的問題</h2><p>如果讓不同 Agent 在新的 Session 中讀取同一版本的 Goal 與 State，它們能否更準確地延續工作？這比比較哪個模型寫得更流暢，可能更接近問題核心。</p><hr class="soft-rule" style="margin:40px 0 25px"><p style="font-size:13px;color:#968678">研究筆記可能隨新證據更新，實驗設計與實際驗證結果會分開標示。</p><a class="tiny-link" href="index.html">閱讀其他文章</a></article></div></div></main><footer class="footer"><div class="container footer-inner"><div><a class="logo" href="../index.html"><strong>Nio<span>.</span></strong><small>MINXIN CHEN</small></a><p>研究、創作與持續修正。© 2026 Nio Chen</p></div><div class="footer-links"><a href="../projects/index.html">作品</a><a href="../journal/index.html">文章</a><a href="../about.html">關於</a><a href="https://github.com/minxinchen" target="_blank" rel="noopener noreferrer">GitHub ↗</a></div></div></footer><script defer src="../assets/site.js"></script></body></html>
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <script>try{const s=localStorage.getItem("color-scheme");if(s==="light"||s==="dark")document.querySelector('meta[name="color-scheme"]').content=s;}catch{}</script>
+  <meta name="description" content="多 Agent 協作實戰踩坑：為什麼要在第二輪計劃性喊停、定性權為何不能交給 AI、以及同 Session 多工如何拉低品質。">
+  <title>多 Agent 協作的踩坑紀錄：什麼時候該喊停，哪些決定不能交給 AI · Nio Chen</title>
+  <link rel="canonical" href="https://portfolio-site-1b8.pages.dev/journal/session-continuity.html">
+  <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container head-inner">
+      <a class="logo" href="../index.html" aria-label="Nio 首頁"><strong>nio<span>.</span>chen</strong><small>LAB &amp; NOTES</small></a>
+      <nav class="site-nav" id="main-nav" aria-label="主選單">
+        <a href="../index.html">首頁</a>
+        <a href="../projects/index.html">作品與實驗室</a>
+        <a href="../journal/index.html" aria-current="page">技術文章</a>
+        <a href="../about.html">關於</a>
+        <a class="nav-contact" href="../about.html#contact">聯絡 ↗</a>
+      </nav>
+      <div class="head-tools">
+        <button class="theme-toggle" type="button" data-theme-toggle aria-label="切換深色或淺色模式">
+          <span class="mode-dark"><span aria-hidden="true">☾</span><span>深色</span></span>
+          <span class="mode-light"><span aria-hidden="true">☀</span><span>淺色</span></span>
+        </button>
+        <button class="menu-toggle" type="button" data-menu aria-expanded="false" aria-controls="main-nav">選單</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <div class="reading">
+        <header class="article-head">
+          <a class="back-link" href="index.html">← 返回技術文章</a>
+          <p class="smallcaps" style="margin:22px 0 0">AI 工作流 // MULTI-AGENT GOVERNANCE</p>
+          <h1>多 Agent 協作的踩坑紀錄：什麼時候該喊停，哪些決定不能交給 AI</h1>
+          <p class="lead">很多人以為多 Agent 協作最難的是寫串接腳本，但我實際在個人工作站跑了幾個月後，發現真正容易失控的是「決策權被悄悄稀釋」與「同一個對話裡做太多雜事」。</p>
+          <div class="article-info">
+            <span>Nio Chen</span>
+            <span>2026-05</span>
+            <span>分類：AI 工作流</span>
+            <span>Repos：<a href="https://github.com/minxinchen/ai-workstation-handoff" target="_blank" rel="noopener noreferrer" style="color:var(--accent)">ai-workstation-handoff ↗</a> · <a href="https://github.com/minxinchen/context-recall-lab" target="_blank" rel="noopener noreferrer" style="color:var(--accent)">context-recall-lab ↗</a></span>
+          </div>
+        </header>
+
+        <article class="article-prose">
+          <p>剛開始同時用 Claude Code 和 Codex 協作管理自己的工作站時，我一度覺得「派 5、6 個 subagent 互相驗證」很有效率。直到有一次做到第二輪深度評估，我突然停下來喊卡——因為我發現，<strong>我從專案決策者，變成了在兩個 AI 之間複製貼上的訊息搬運工。</strong></p>
+
+          <h2>一、為什麼要「計劃性喊停」？檔案能救回，概念定性權不能</h2>
+          <p>那次失控的徵兆非常微妙：兩個 Agent 沒有改壞任何程式碼，但它們開始互相拿對方的建議當成既定前提，越疊越細——替還沒成熟的實驗憑空設了升級門檻（例如「樣本數達 50、通過率 70%」），也提前把實驗身份框死成正式記憶層。</p>
+          <p>這件事讓我畫出一條很清楚的紅線：<strong>把「執行權」跟「定性權」分開。</strong></p>
+          <ul>
+            <li><strong>物理層（改檔、跑測試、整理報告）：</strong>可以交給 Agent 執行，改錯了還有 <code>git revert</code> 可以退回。</li>
+            <li><strong>概念層（這個實驗算什麼、邊界在哪、什麼時候升級）：</strong>必須留在人手裡。Agent 只能驗證事實、列候選選項，不能把未經拍板的假設直接寫成預設前提。</li>
+          </ul>
+
+          <h2>二、我後來固定下來的三角分工：釐清 → 拍板 → 執行</h2>
+          <p>實際跑過幾十個 Session 後，我發現執行力特別強的模型（像是 Claude）有個很明顯的慣性：給它一個方向，它會衝得非常快，但有時會在早期邊界沒對齊的情況下直接改完整份檔案。</p>
+          <p>所以我後來把工作習慣拆成三步：<strong>先用 Codex 幫我釐清需求、抓盲點與設定停損點 → 我自己看過拍板 → 再把清楚的範圍交給 Claude 執行。</strong></p>
+          <p>同時我也訂了一條來源溯源紀律：只要轉述另一個 Agent 的建議，就必須明標來源，不能無聲改寫成自己的結論。在整理對話紀錄時甚至出現過一個很有趣的辨識標準——<strong>「對話裡超過 10 行的工整規格通常不是我親手打的，我真實的決策信號都是 10 行以內的短句與反問。」</strong>分清這三層來源（人親打的短句、人採用的外部 Spec、平行 Agent 的建議），才不會在日後回溯決策時搞混誰才是拍板的人。</p>
+
+          <h2>三、同一個 Session 邊趕交付、邊改工具，品質一定掉</h2>
+          <p>另一個真實踩坑發生在趕一份技術文件時：我在同一個對話裡一邊改主文、一邊順手叫模型修儀表板顯示、加新的審稿 subagent、又順便存檔。結果模型在同一次對話裡連續出現三個失誤：</p>
+          <ol>
+            <li>儀表板上的字數標籤直接腦補（寫 <code>~2,800</code>，實測是 <code>3,213</code>）。</li>
+            <li>沒等我逐段確認，就把上一版沒審過的段落直接複製進新版。</li>
+            <li>主文裡開始混進「工具存在感」，而且出現「廠房有這套控制器，所以操作員不用重新學習」這種明顯的邏輯跳躍。</li>
+          </ol>
+          <p>根因其實很簡單：<strong>Meta-task（改工具、設計新流程）跟 Product-task（完成交付物）都在搶同一個 Context Window 的注意力。</strong>自那之後我就立了一條鐵則：一個 Session 只做一條主軸，要做工具改造就另開新對話，絕不在趕交付時插隊改架構。</p>
+
+          <blockquote>好的多 Agent 工作流，不是讓模型自己聊成一團，而是讓每一次交接都有檔案證據、每一個停損點都由人決定。</blockquote>
+
+          <div class="note-box">
+            <strong>相關公開紀錄</strong>
+            <p style="margin:6px 0 0">關於跨 Session 交接、版本綁定引用與唯讀影響分析的實驗程式，都整理在我的 GitHub：<a href="https://github.com/minxinchen/ai-workstation-handoff" target="_blank" rel="noopener noreferrer">ai-workstation-handoff ↗</a>、<a href="https://github.com/minxinchen/context-recall-lab" target="_blank" rel="noopener noreferrer">context-recall-lab ↗</a> 與 <a href="https://github.com/minxinchen/wiki-change-impact" target="_blank" rel="noopener noreferrer">wiki-change-impact ↗</a>。</p>
+          </div>
+
+          <hr class="soft-rule" style="margin:36px 0 22px">
+          <a class="tiny-link" href="index.html">返回技術文章列表</a>
+        </article>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div>
+        <a class="logo" href="../index.html"><strong>nio<span>.</span>chen</strong><small>LAB &amp; NOTES</small></a>
+        <p>Built for readability &amp; verification. © 2026 Nio Chen</p>
+      </div>
+      <div class="footer-links">
+        <a href="../projects/index.html">作品與實驗室</a>
+        <a href="../journal/index.html">技術文章</a>
+        <a href="../about.html">關於</a>
+        <a href="https://github.com/minxinchen" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+      </div>
+    </div>
+  </footer>
+  <script defer src="../assets/site.js"></script>
+</body>
+</html>

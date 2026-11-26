@@ -1,6 +1,108 @@
-<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="theme-color" content="#fcfaf6"><meta name="description" content="從一次行動版首頁效能改善，理解「診斷、試驗、上線、驗收」的順序。"><title>不是先改整個網站，而是先找出瓶頸。 · Nio</title><link rel="stylesheet" href="../assets/style.css"></head><body><header class="site-header"><div class="container head-inner"><a class="logo" href="../index.html" aria-label="Nio 首頁"><strong>Nio<span>.</span></strong><small>MINXIN CHEN</small></a><button class="menu-toggle" data-menu aria-expanded="false" aria-controls="main-nav">選單</button><nav class="site-nav" id="main-nav" aria-label="主選單"><a href="../index.html">首頁</a><a href="../projects/index.html">作品</a><a href="../journal/index.html" aria-current="page">文章</a><a href="../about.html">關於</a><a class="nav-contact" href="../about.html#contact">聯絡我 ↗</a></nav></div></header><main><div class="container"><div class="reading"><header class="article-head"><a class="back-link" href="index.html">← 返回文章列表</a><p class="smallcaps" style="margin:27px 0 0">B2B / NIO'S JOURNAL</p><h1>不是先改整個網站，而是先找出瓶頸。</h1><p class="lead">從一次行動版首頁效能改善，理解「診斷、試驗、上線、驗收」的順序。</p><div class="article-info"><span>Nio Chen</span><span>案例筆記 · 草稿</span><span>繁體中文</span></div></header><article class="article-prose"><p>當一個 B2B 工業網站行動版的首屏載入很慢，第一個直覺可能是更換主機、增加快取或壓縮所有圖片。但全面修改的成本高，也很難知道究竟是哪一項改動產生效果。</p>
-<h2>先建立基準，再隔離變因</h2><p>在 KIYAN 的網站優化案例中，我先整理主機、首頁 Slider、圖片、JavaScript 與快取等可能因素，再進行小範圍試驗，盡量不改變其他內容，只調整首屏呈現。</p><p>這個順序的重要性在於：先確認值得投入的瓶頸，再決定正式修改範圍。</p>
-<div class="case-graphic"><div style="font-size:12px;color:#dbc8bb;margin-bottom:10px">案例記錄 / MOBILE LCP</div><div style="display:flex;justify-content:space-between;gap:8px;align-items:baseline;font-weight:700;font-size:clamp(16px,3vw,27px)"><span>13.10s</span><span>→</span><span>3.16s</span><span>→</span><span>2.72s</span></div><div style="display:flex;justify-content:space-between;font-size:11px;color:#d3bcb0"><span>調整前</span><span>隔離試驗</span><span>正式修改</span></div></div>
-<h2>產品資訊也是系統的一部分</h2><p>比例閥的壓力、流量、控制訊號和型號差異，不應在不同語系、FAQ 和結構化資料中各自產生不同的版本。整理可信來源，比直接產出更多文案更重要。</p><p>這也是 B2B 技術行銷與一般內容製作不同的地方。客戶需要的是可以用來判斷適用性的資訊，而不只是漂亮的語句。</p>
-<h2>技術完成與商業成效分開看</h2><p>首頁載入時間改善，是技術量測結果；搜尋引擎重新爬取、自然搜尋曝光與詢價成果則是不同層級的問題。即使全站點擊成長，也不能因此忽略特定語系曝光下降。</p><div class="note-box"><strong>數據註記</strong><p style="margin:6px 0 0">效能數字取自既有 KIYAN 案例文件，不代表本文重新進行即時量測，也不能直接推論搜尋流量或營收的因果效果。</p></div>
-<h2>從網站改善到專案管理</h2><p>這個案例留下的工作方法是：明確定義問題，找出最小可驗證修改，再投入正式上線與後續追蹤。它是一個網站專案，也是一個需求、風險與驗收如何連在一起的實務練習。</p><hr class="soft-rule" style="margin:40px 0 25px"><p style="font-size:13px;color:#968678">研究筆記可能隨新證據更新，實驗設計與實際驗證結果會分開標示。</p><a class="tiny-link" href="index.html">閱讀其他文章</a></article></div></div></main><footer class="footer"><div class="container footer-inner"><div><a class="logo" href="../index.html"><strong>Nio<span>.</span></strong><small>MINXIN CHEN</small></a><p>研究、創作與持續修正。© 2026 Nio Chen</p></div><div class="footer-links"><a href="../projects/index.html">作品</a><a href="../journal/index.html">文章</a><a href="../about.html">關於</a><a href="https://github.com/minxinchen" target="_blank" rel="noopener noreferrer">GitHub ↗</a></div></div></footer><script defer src="../assets/site.js"></script></body></html>
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <script>try{const s=localStorage.getItem("color-scheme");if(s==="light"||s==="dark")document.querySelector('meta[name="color-scheme"]').content=s;}catch{}</script>
+  <meta name="description" content="從 KIYAN 行動版首頁 Mobile LCP 13.10s→2.72s 的隔離試驗，談 B2B 技術網站的效能查核、雙路徑競品驗證與邏輯邊界。">
+  <title>不是先改整個網站，而是先找出瓶頸：B2B 網站效能隔離測試與內容查核 · Nio Chen</title>
+  <link rel="canonical" href="https://portfolio-site-1b8.pages.dev/journal/kiyan-experiment.html">
+  <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container head-inner">
+      <a class="logo" href="../index.html" aria-label="Nio 首頁"><strong>nio<span>.</span>chen</strong><small>LAB &amp; NOTES</small></a>
+      <nav class="site-nav" id="main-nav" aria-label="主選單">
+        <a href="../index.html">首頁</a>
+        <a href="../projects/index.html">作品與實驗室</a>
+        <a href="../journal/index.html" aria-current="page">技術文章</a>
+        <a href="../about.html">關於</a>
+        <a class="nav-contact" href="../about.html#contact">聯絡 ↗</a>
+      </nav>
+      <div class="head-tools">
+        <button class="theme-toggle" type="button" data-theme-toggle aria-label="切換深色或淺色模式">
+          <span class="mode-dark"><span aria-hidden="true">☾</span><span>深色</span></span>
+          <span class="mode-light"><span aria-hidden="true">☀</span><span>淺色</span></span>
+        </button>
+        <button class="menu-toggle" type="button" data-menu aria-expanded="false" aria-controls="main-nav">選單</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <div class="reading">
+        <header class="article-head">
+          <a class="back-link" href="index.html">← 返回技術文章</a>
+          <p class="smallcaps" style="margin:22px 0 0">驗證與實測 // B2B SEO &amp; PERFORMANCE</p>
+          <h1>不是先改整個網站，而是先找出瓶頸：B2B 網站效能隔離測試與內容查核</h1>
+          <p class="lead">做 B2B 工業網站優化與技術內容時，最常見的浪費是「還沒找到真瓶頸就先全站大改」，以及「把漂亮術語當成可驗證證據」。這篇整理我在效能隔離與內容查核上的實戰做法。</p>
+          <div class="article-info">
+            <span>Nio Chen</span>
+            <span>2026-05</span>
+            <span>分類：驗證與實測</span>
+            <span>Repo：<a href="https://github.com/minxinchen/seo-aio-b2b-case-study" target="_blank" rel="noopener noreferrer" style="color:var(--accent)">seo-aio-b2b-case-study ↗</a></span>
+          </div>
+        </header>
+
+        <article class="article-prose">
+          <p>當一個 B2B 工業網站行動版首頁載入超過 10 秒，多數人的第一個反應是「換主機」、「買快取外掛」或「整站重寫」。但全面修改不只成本高，更麻煩的是改完之後，你根本不知道是哪一項調整真正起作用。</p>
+
+          <h2>一、先隔離單一變因，再決定正式上線範圍</h2>
+          <p>在 <a href="../projects/kiyan.html">KIYAN 比例閥網站</a> 的行動版首屏優化裡，我先盤點了主機回應、首頁 Slider、圖片體積、JavaScript 與快取等可能變因，但沒有一次全動，而是先做一個最小隔離實驗：盡量不改其他頁面結構，只替換首屏呈現方式來驗證瓶頸。</p>
+
+          <div class="case-graphic">
+            <div style="font-family:var(--mono);font-size:11.5px;color:var(--accent-dark);margin-bottom:10px">CASE RECORD // MOBILE LCP ISOLATION TEST</div>
+            <div style="display:flex;justify-content:space-between;gap:8px;align-items:baseline;font-family:var(--mono);font-weight:700;font-size:clamp(18px,3vw,28px)">
+              <span>13.10s</span><span>→</span><span>3.16s</span><span>→</span><span>2.72s</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:11.5px;color:var(--inv-mute);margin-top:6px">
+              <span>調整前</span><span>隔離試驗</span><span>正式修改</span>
+            </div>
+          </div>
+
+          <p>確認首屏就是最大瓶頸後，再投入正式調整，把 Mobile LCP 從 13.10 秒降到 3.16 秒（隔離測試），正式調整後約 2.72 秒。這個順序的價值在於：用最小的風險先證明方向對了，才去動正式站。</p>
+
+          <h2>二、B2B 技術內容與 AI 輔助最常踩的三個假象</h2>
+          <p>除了載入速度，我在整理工業產品規格、多語系頁面與商業競品研究時，也反覆看到 AI 輔助內容最容易翻車的三個地方：</p>
+          <ol>
+            <li><strong>只看官方說法，沒做雙路徑交叉驗證：</strong>只讀官網型錄或規格表，每家看起來都很完美；把官方文件跟經銷商、論壇、二手機市場的民間回饋放在一起比，才能看出「官方承諾」與「實際停機／服務落差」在哪裡。</li>
+            <li><strong>把還沒自動化的未來式寫成現在式：</strong>如果一套流程目前是「分流與覆核已上線、根因分析仍由人工整合」，誠實把這句話放在流程說明裡面，反而比用一堆漂亮術語包裝更經得起客戶或評審追問。</li>
+            <li><strong>存在性不等於能力（邏輯跳躍）：</strong>看過最典型的一句錯誤推論是「客戶廠房裡已經有某牌設備，所以操作員不用重新學習」。就像電腦裝了 Python 不代表人是 Python 工程師，<strong>存在、能力、意圖是三個完全不同的層次</strong>，技術行銷只要跨層跳躍，內行人一眼就會質疑整份資料的可信度。</li>
+          </ol>
+
+          <h2>三、技術完成與商業成效分開判讀</h2>
+          <p>做完效能與結構調整後，我習慣把「技術量測」和「商業成效」切開來看：Mobile LCP 改善是可立即驗證的技術事實；但搜尋引擎重新索引、不同語系的曝光起落、以及詢價轉換則是另一層指標。全站點擊上升時，依然要把特定語系曝光下降的情況單獨列出來查核，不拿單一漂亮數字掩蓋其他面向的警訊。</p>
+          <p>這套從真實 B2B 現場累積出來的檢查習慣，後來也直接變成我做 <a href="../tools/wp-search-lab/">WP Search Lab</a> 的設計底層——不只列出問題，更要把「可驗證證據」和「能力邊界」寫清楚。</p>
+
+          <div class="note-box">
+            <strong>數據註記</strong>
+            <p style="margin:6px 0 0">Mobile LCP 數字（13.10s → 3.16s → 2.72s）取自既有 KIYAN 案例量測紀錄，不代表本文重新執行即時 Live Lighthouse 測試，亦不直接推論搜尋排名或營收成長的因果關係。更多可重算的 B2B SEO × AIO 資料與驗證腳本見 <a href="https://github.com/minxinchen/seo-aio-b2b-case-study" target="_blank" rel="noopener noreferrer">seo-aio-b2b-case-study ↗</a>。</p>
+          </div>
+
+          <hr class="soft-rule" style="margin:36px 0 22px">
+          <a class="tiny-link" href="index.html">返回技術文章列表</a>
+        </article>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div>
+        <a class="logo" href="../index.html"><strong>nio<span>.</span>chen</strong><small>LAB &amp; NOTES</small></a>
+        <p>Built for readability &amp; verification. © 2026 Nio Chen</p>
+      </div>
+      <div class="footer-links">
+        <a href="../projects/index.html">作品與實驗室</a>
+        <a href="../journal/index.html">技術文章</a>
+        <a href="../about.html">關於</a>
+        <a href="https://github.com/minxinchen" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+      </div>
+    </div>
+  </footer>
+  <script defer src="../assets/site.js"></script>
+</body>
+</html>

@@ -1,8 +1,132 @@
-<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="theme-color" content="#fcfaf6"><meta name="description" content="六期技術研究郵件背後，關於選題、查證與實驗設計的工作方法。"><title>熱門工具很多，哪些值得真正試一遍？ · Nio</title><link rel="stylesheet" href="../assets/style.css"></head><body><header class="site-header"><div class="container head-inner"><a class="logo" href="../index.html" aria-label="Nio 首頁"><strong>Nio<span>.</span></strong><small>MINXIN CHEN</small></a><button class="menu-toggle" data-menu aria-expanded="false" aria-controls="main-nav">選單</button><nav class="site-nav" id="main-nav" aria-label="主選單"><a href="../index.html">首頁</a><a href="../projects/index.html">作品</a><a href="../journal/index.html" aria-current="page">文章</a><a href="../about.html">關於</a><a class="nav-contact" href="../about.html#contact">聯絡我 ↗</a></nav></div></header><main><div class="container"><div class="reading"><header class="article-head"><a class="back-link" href="index.html">← 返回文章列表</a><p class="smallcaps" style="margin:27px 0 0">GITHUB / NIO'S JOURNAL</p><h1>熱門工具很多，哪些值得真正試一遍？</h1><p class="lead">六期技術研究郵件背後，關於選題、查證與實驗設計的工作方法。</p><div class="article-info"><span>Nio Chen</span><span>2026/10–11 · 整理稿</span><span>繁體中文</span></div></header><article class="article-prose"><p>追蹤 GitHub 專案很容易變成一場新工具競賽：Star 數上升、影片開始介紹，就想把整套架構搬進自己的工作站。但熱門程度只是關注訊號，不是需求、品質或安全的證據。</p>
-<h2>六期研究郵件，逐漸形成一套篩選思路</h2><p>2026 年 10 月 30 日至 11 月 4 日，我整理並寄給自己六期 GitHub AI 實作雷達。每期挑選幾個工具，說明它解決什麼問題、可能如何使用，以及有哪些尚未查證的宣稱。</p>
-<div class="data-table"><table><thead><tr><th>觀察主題</th><th>代表工具</th><th>真正想比較的問題</th></tr></thead><tbody><tr><td>減少不必要的工程</td><td>Ponytail</td><td>新工具是否真的優於重用現有能力？</td></tr><tr><td>跨 Session 的工作連續性</td><td>Claude-Mem、XERJ</td><td>是否能更正確地找回決策與來源？</td></tr><tr><td>實際操作環境</td><td>Lightpanda</td><td>在相同工作下，效能是否改善且品質不下降？</td></tr><tr><td>專業流程導入</td><td>Claude SEO</td><td>專用 Agent 是否更能找出可查證的網站問題？</td></tr></tbody></table></div>
-<h2>我想看的不是多快，而是值不值得</h2><p>以瀏覽器工具為例：即使某種執行環境更快，如果擷取欄位不完整、網站不相容或失敗率升高，也不該只用延遲下降判定成功。</p><p>對知識檢索也是一樣。減少 Token 可能是優點，但如果回答更常引用舊版本，整體工作品質反而會下降。</p>
-<h2>把每封研究郵件變成可驗收的提案</h2><p>一個最小案例應該回答：比較的問題是什麼？基準組與實驗組是否一致？哪些數據有可信來源？如果工具沒有改善結果，是否能接受不安裝的決定？</p>
-<blockquote>工具應該服務問題，而不是為了使用工具而重新定義問題。</blockquote>
-<div class="note-box"><strong>資料界線</strong><p style="margin:6px 0 0">六期郵件是已產生並寄送的個人研究內容；當中的 A/B、MVP 與專案提案，多數仍是實驗設計，並非已完成的實測。本文不把第三方 Star 趨勢當作工具品質評分。</p></div>
-<h2>下一步</h2><p>從選題中挑一個與現有工作直接相關、能在隔離環境中測試的問題。固定輸入與評估方式，保留反例，讓未來的技術分享不只是介紹功能，也能交代使用前後的差異。</p><hr class="soft-rule" style="margin:40px 0 25px"><p style="font-size:13px;color:#968678">研究筆記可能隨新證據更新，實驗設計與實際驗證結果會分開標示。</p><a class="tiny-link" href="index.html">閱讀其他文章</a></article></div></div></main><footer class="footer"><div class="container footer-inner"><div><a class="logo" href="../index.html"><strong>Nio<span>.</span></strong><small>MINXIN CHEN</small></a><p>研究、創作與持續修正。© 2026 Nio Chen</p></div><div class="footer-links"><a href="../projects/index.html">作品</a><a href="../journal/index.html">文章</a><a href="../about.html">關於</a><a href="https://github.com/minxinchen" target="_blank" rel="noopener noreferrer">GitHub ↗</a></div></div></footer><script defer src="../assets/site.js"></script></body></html>
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <script>try{const s=localStorage.getItem("color-scheme");if(s==="light"||s==="dark")document.querySelector('meta[name="color-scheme"]').content=s;}catch{}</script>
+  <meta name="description" content="追蹤 GitHub AI 專案時如何避免追星盲裝？分享我從 Superpowers、pstack 與 Ponytail 等開源設計中學到的選型與適配原則。">
+  <title>GitHub 開源工具實作雷達：為什麼我看重 Superpowers、pstack 與 Ponytail 這類設計？ · Nio Chen</title>
+  <link rel="canonical" href="https://portfolio-site-1b8.pages.dev/journal/github-radar.html">
+  <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container head-inner">
+      <a class="logo" href="../index.html" aria-label="Nio 首頁"><strong>nio<span>.</span>chen</strong><small>LAB &amp; NOTES</small></a>
+      <nav class="site-nav" id="main-nav" aria-label="主選單">
+        <a href="../index.html">首頁</a>
+        <a href="../projects/index.html">作品與實驗室</a>
+        <a href="../journal/index.html" aria-current="page">技術文章</a>
+        <a href="../about.html">關於</a>
+        <a class="nav-contact" href="../about.html#contact">聯絡 ↗</a>
+      </nav>
+      <div class="head-tools">
+        <button class="theme-toggle" type="button" data-theme-toggle aria-label="切換深色或淺色模式">
+          <span class="mode-dark"><span aria-hidden="true">☾</span><span>深色</span></span>
+          <span class="mode-light"><span aria-hidden="true">☀</span><span>淺色</span></span>
+        </button>
+        <button class="menu-toggle" type="button" data-menu aria-expanded="false" aria-controls="main-nav">選單</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <div class="reading">
+        <header class="article-head">
+          <a class="back-link" href="index.html">← 返回技術文章</a>
+          <p class="smallcaps" style="margin:22px 0 0">開源雷達 // OPEN SOURCE RADAR</p>
+          <h1>GitHub 開源工具實作雷達：為什麼我看重 Superpowers、pstack 與 Ponytail 這類設計？</h1>
+          <p class="lead">每天都有新的 AI 工具衝上 GitHub Trending，但 Star 數只是關注訊號，不是需求、品質或安全的證據。這篇整理我篩選開源專案的尺規，以及幾個讓我反覆借鏡的設計思路。</p>
+          <div class="article-info">
+            <span>Nio Chen</span>
+            <span>2026-11</span>
+            <span>分類：開源雷達</span>
+          </div>
+        </header>
+
+        <article class="article-prose">
+          <p>追蹤 GitHub 生態系很容易掉進「新工具收藏癖」：看到社群轉發、Star 數飆升，就想把整套框架裝進自己的工作站。但實作過幾個專案後會發現，<strong>多裝一套自己沒摸透的架構，往往比自己手管幾個簡單規則更花維護成本。</strong></p>
+          <p>2026 年 10 月底到 11 月初，我幫自己跑了六期「GitHub AI 實作雷達」研究郵件，核心目標不是整理熱榜，而是回答一個務實問題：<strong>這個專案解決的痛點，真的值得我動手試一遍嗎？如果試完沒有比較好，我能不能乾脆不安裝？</strong></p>
+
+          <h2>一、三個讓我印象深刻的開源設計思路</h2>
+          <p>在看過一批 Agent 框架與工作流專案後，我特別欣賞的往往不是功能最花俏的大平台，而是把「紀律、邊界、輕量化」想得很清楚的工具：</p>
+
+          <div class="data-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>關注對象</th>
+                  <th>我欣賞的設計核心</th>
+                  <th>實際帶進自己工作流的做法</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Superpowers</strong></td>
+                  <td>把工程紀律（先規劃、測試先行、驗證再宣告完成）蒸餾成可重複調用的 Skill，而不是每次靠臨場長 Prompt 碰運氣。</td>
+                  <td>檢視哪些規則適合蒸餾成獨立 Skill，避免把所有行為規範塞爆主記憶檔。</td>
+                </tr>
+                <tr>
+                  <td><strong>pstack</strong></td>
+                  <td>把 Prototype（先驗證資料與可行性）跟 Feature 實作、獨立驗收拆開，避免還沒確認資料拿不拿得到就先寫一堆介面。</td>
+                  <td>做 <a href="../projects/wp-search-lab.html">WP Search Lab</a> 時直接讀取原始規範並誠實適配到 Codex 環境——先跑 CORS 原型確認瀏覽器阻擋邊界，再決定採 HTML 匯入與代理架構。</td>
+                </tr>
+                <tr>
+                  <td><strong>Ponytail</strong></td>
+                  <td>核心問題很尖銳：<strong>能不能減少不必要的工程？</strong>在引入新工具之前，先問現有能力重用是否就夠了。</td>
+                  <td>把「不建立無必要 Framework」寫成專案前提；像 WP Search Lab 直接輸出可離線運作的單檔 HTML，減少部署依賴。</td>
+                </tr>
+                <tr>
+                  <td><strong>Claude-Mem / Lightpanda 等</strong></td>
+                  <td>分別切中跨 Session 狀態檢索與輕量瀏覽器執行環境兩個真實痛點。</td>
+                  <td>不看宣傳延遲數字，而是把焦點放在對照問題：省了 Token 後，會不會更容易引用過期版本？速度變快後，擷取欄位會不會變缺？</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h2>二、我現在怎麼篩選一個開源專案？</h2>
+          <p>比起看「總 Star 數」或轉發貼文，我會先做四件低成本查核：</p>
+          <ol>
+            <li><strong>先看授權與依賴清不清楚：</strong>如果要整合進自己的工具，MIT / Apache-2.0 / BSD-2-Clause 的授權文字有沒有看對？我在做 WP Search Lab 時就曾抓到依賴套件 <code>entities</code> 的授權文字標錯，這種細節不在第一時間核對，後面很容易踩雷。</li>
+            <li><strong>區分「同窗口比較」與「無法比較」：</strong>在追蹤熱度時，一定要看相同起訖日期的 7 日變化（<code>Δ7d</code>），沒有同窗口快照就老實標「無法計算」，不拿總 Stars 充數。</li>
+            <li><strong>問清楚基準組是什麼：</strong>新工具號稱快 3 倍、省 50% Token，但對照的是什麼輸入？如果品質或正確率掉下來，速度就沒有意義。</li>
+            <li><strong>允許「試完決定不用」：</strong>一個好的技術調研，最後結論完全可以是「這個思路值得借鏡，但不需要裝整套工具」。以 pstack 為例，在沒有 Cursor 原生 Agent 的環境裡，我選擇讀取它的原始規範並揭露環境差異做適配，而不是硬搬整套設定。</li>
+          </ol>
+
+          <blockquote>工具應該服務問題，而不是為了使用某個熱門框架，反過來重新定義自己的問題。</blockquote>
+
+          <div class="note-box">
+            <strong>證據邊界說明</strong>
+            <p style="margin:6px 0 0">本文整理自 2026/10–11 六期個人研究郵件與 WP Search Lab 實際選型紀錄。文中提及的 pstack 規範適配與 parse5／Readability／robots-parser 整合已經過實測；其餘如瀏覽器引擎與記憶工具的 A/B 比較，多數仍屬實驗設計與選題觀察，不代表已完成跨工具基準跑分。</p>
+          </div>
+
+          <h2>三、延伸閱讀</h2>
+          <p>如果你對我如何把這套「GitHub 雷達」跟每日學習排程拆成兩條有品質關卡的管線有興趣，可以接著看下一篇：<a href="ai-research-workflow.html">《把每日技術追蹤拆成兩條管線：GitHub 雷達 × AIoT 微課的 Workflow 設計》</a>。</p>
+
+          <hr class="soft-rule" style="margin:36px 0 22px">
+          <a class="tiny-link" href="index.html">返回技術文章列表</a>
+        </article>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div>
+        <a class="logo" href="../index.html"><strong>nio<span>.</span>chen</strong><small>LAB &amp; NOTES</small></a>
+        <p>Built for readability &amp; verification. © 2026 Nio Chen</p>
+      </div>
+      <div class="footer-links">
+        <a href="../projects/index.html">作品與實驗室</a>
+        <a href="../journal/index.html">技術文章</a>
+        <a href="../about.html">關於</a>
+        <a href="https://github.com/minxinchen" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+      </div>
+    </div>
+  </footer>
+  <script defer src="../assets/site.js"></script>
+</body>
+</html>

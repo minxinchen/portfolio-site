@@ -1,1 +1,123 @@
-<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="theme-color" content="#fcfaf6"><meta name="description" content="將定期蒐集、資料查證、研究整理、微課製作與 Gmail 交付，設計成有品質關卡的工作流。"><title>AI Research Workflow · Nio</title><link rel="stylesheet" href="../assets/style.css"></head><body><header class="site-header"><div class="container head-inner"><a class="logo" href="../index.html" aria-label="Nio 首頁"><strong>Nio<span>.</span></strong><small>MINXIN CHEN</small></a><button class="menu-toggle" data-menu aria-expanded="false" aria-controls="main-nav">選單</button><nav class="site-nav" id="main-nav" aria-label="主選單"><a href="../index.html">首頁</a><a href="../projects/index.html" aria-current="page">作品</a><a href="../journal/index.html">文章</a><a href="../about.html">關於</a><a class="nav-contact" href="../about.html#contact">聯絡我 ↗</a></nav></div></header><main><div class="container"><div class="case-header"><div><a class="back-link" href="index.html">← 返回作品</a><p style="margin-top:18px" class="smallcaps">技術情報與內容生產流程</p><h1>AI Research Workflow</h1><p>將定期蒐集、資料查證、研究整理、微課製作與 Gmail 交付，設計成有品質關卡的工作流。</p><div class="case-meta"><span class="pill">設計稿與實際郵件</span><span class="pill">Case Study</span></div></div><div class="case-art" aria-hidden="true"><span>R.</span></div></div><div class="case-stats"><div class="case-stat"><div class="stat-label">工作流程</div><strong>兩條內容線</strong></div><div class="case-stat"><div class="stat-label">輸出紀錄</div><strong>六期個人研究郵件</strong></div><div class="case-stat"><div class="stat-label">部署狀態</div><strong>Blueprint，未證實自動化</strong></div></div><div class="case-layout"><nav class="case-sidebar" aria-label="案例章節"><a href="#1">01 · 原始問題</a><a href="#2">02 · 做法</a><a href="#3">03 · 實際產物</a><a href="#4">04 · 仍待驗證</a></nav><div class="case-content"><section id="1"><h2>原始問題</h2><p>每日追蹤新技術容易流於工具清單：來源比較窗口不同、研究進度中斷，或把未實作的測試寫成已驗證成果。</p></section><section id="2"><h2>做法</h2><p>將 GitHub 技術雷達與 AIoT 微課分成兩條內容流程，共用來源查證、內容 Gate、電子報編排及寄送狀態。為數據不足、內容失敗與重複寄送設置明確規則。</p><div class="visual-panel"><div class="steps"><div class="step"><span>A</span><strong>工具發現</strong></div><div class="step"><span>B</span><strong>資料查證</strong></div><div class="step"><span>C</span><strong>內容審核</strong></div><div class="step"><span>D</span><strong>交付紀錄</strong></div></div><p style="font-size:12px;margin:14px 0 0">內容生產過程示意，流程規格與正式自動化實作需分開驗收。</p></div></section><section id="3"><h2>實際產物</h2><p>已建立可閱讀的 HTML Workflow Blueprint；2026/10/30 至 11/04 可查到六期寄給自己的研究郵件，包含 GitHub 專案分析、實驗提案與 AIoT 學習內容。</p></section><section id="4"><h2>仍待驗證</h2><p>藍圖不等於工作流程已部署。郵件證明內容產出和寄送紀錄，但尚不能證明排程器、去重、重試及持久化紀錄都已按設計運作。</p></section><div class="cta" style="margin:27px 0 58px"><div><h2 style="font-size:24px">從這個案例，繼續看更多問題。</h2><p>下一篇研究、實驗或實務紀錄，正在陸續整理。</p></div><a class="round-link" href="../journal/index.html">閱讀技術文章 ↗</a></div></div></div></div></main><footer class="footer"><div class="container footer-inner"><div><a class="logo" href="../index.html"><strong>Nio<span>.</span></strong><small>MINXIN CHEN</small></a><p>研究、創作與持續修正。© 2026 Nio Chen</p></div><div class="footer-links"><a href="../projects/index.html">作品</a><a href="../journal/index.html">文章</a><a href="../about.html">關於</a><a href="https://github.com/minxinchen" target="_blank" rel="noopener noreferrer">GitHub ↗</a></div></div></footer><script defer src="../assets/site.js"></script></body></html>
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <script>try{const s=localStorage.getItem("color-scheme");if(s==="light"||s==="dark")document.querySelector('meta[name="color-scheme"]').content=s;}catch{}</script>
+  <meta name="description" content="將定期蒐集、資料查證、研究整理、微課製作與 Gmail 交付，設計成有 4 道品質關卡的雙管線工作流藍圖。">
+  <title>AI Research Workflow · Nio Chen</title>
+  <link rel="canonical" href="https://portfolio-site-1b8.pages.dev/projects/workflow.html">
+  <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container head-inner">
+      <a class="logo" href="../index.html" aria-label="Nio 首頁"><strong>nio<span>.</span>chen</strong><small>LAB &amp; NOTES</small></a>
+      <nav class="site-nav" id="main-nav" aria-label="主選單">
+        <a href="../index.html">首頁</a>
+        <a href="../projects/index.html" aria-current="page">作品與實驗室</a>
+        <a href="../journal/index.html">技術文章</a>
+        <a href="../about.html">關於</a>
+        <a class="nav-contact" href="../about.html#contact">聯絡 ↗</a>
+      </nav>
+      <div class="head-tools">
+        <button class="theme-toggle" type="button" data-theme-toggle aria-label="切換深色或淺色模式">
+          <span class="mode-dark"><span aria-hidden="true">☾</span><span>深色</span></span>
+          <span class="mode-light"><span aria-hidden="true">☀</span><span>淺色</span></span>
+        </button>
+        <button class="menu-toggle" type="button" data-menu aria-expanded="false" aria-controls="main-nav">選單</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <div class="case-header">
+        <div>
+          <a class="back-link" href="index.html">← 返回作品與實驗室</a>
+          <p style="margin-top:16px" class="smallcaps">WORKFLOW BLUEPRINT · TWO-PIPELINE DESIGN</p>
+          <h1>AI Research Workflow</h1>
+          <p>把原本的每日定時追蹤拆成兩條獨立內容生產線（GitHub AI 實作雷達 × AIoT 微課），共用查證關卡、HTML 編排與交付紀錄。</p>
+          <div class="case-meta"><span class="pill">Workflow Blueprint v1.0</span><span class="pill">6 期實際郵件</span></div>
+          <div class="hero-actions">
+            <a class="round-link" href="../journal/ai-research-workflow.html">閱讀完整設計拆解 ↗</a>
+            <a class="round-link alt" href="../journal/github-radar.html">看 GitHub 開源工具雷達</a>
+          </div>
+        </div>
+        <div class="case-art" aria-hidden="true"><span>R.</span></div>
+      </div>
+
+      <div class="case-stats">
+        <div class="case-stat"><div class="stat-label">工作流程</div><strong>A 雷達 / B 微課 雙線分流</strong></div>
+        <div class="case-stat"><div class="stat-label">品質關卡</div><strong>4 道明確 Quality Gate</strong></div>
+        <div class="case-stat"><div class="stat-label">部署狀態</div><strong>Blueprint，未宣稱全自動上線</strong></div>
+      </div>
+
+      <div class="case-layout">
+        <nav class="case-sidebar" aria-label="案例章節">
+          <a href="#1">01 · 原始問題</a>
+          <a href="#2">02 · 雙線做法</a>
+          <a href="#3">03 · 實際產物</a>
+          <a href="#4">04 · 仍待驗證</a>
+        </nav>
+
+        <div class="case-content">
+          <section id="1">
+            <h2>原始問題</h2>
+            <p>每日追蹤新技術很容易變成單純的工具清單：比較窗口不一致、研究進度中斷、重複推薦看過的專案，或把尚未實作的構想寫成已驗證成果。</p>
+          </section>
+
+          <section id="2">
+            <h2>雙線做法</h2>
+            <p>將 GitHub 技術雷達與 AIoT 微課拆成兩條獨立生產線，共用來源查證、4 道 Quality Gate（Star 可比較性、Case Study 可驗收性、AIoT 初學者邊界、寄送失敗處理）、HTML 電子報編排及持久化執行紀錄。</p>
+            <div class="visual-panel">
+              <div class="steps">
+                <div class="step"><span>A</span><strong>工具發現</strong></div>
+                <div class="step"><span>B</span><strong>來源查證</strong></div>
+                <div class="step"><span>C</span><strong>4 道 Gate</strong></div>
+                <div class="step"><span>D</span><strong>交付紀錄</strong></div>
+              </div>
+              <p style="font-size:12.5px;margin:14px 0 0">流程藍圖規格與正式部署程式分開標示；詳細資料夾結構與評分權重請見 <a href="../journal/ai-research-workflow.html" style="color:var(--accent);text-decoration:underline;text-underline-offset:3px">完整設計拆解文</a>。</p>
+            </div>
+          </section>
+
+          <section id="3">
+            <h2>實際產物</h2>
+            <p>已建立完整的 HTML Workflow Blueprint（v1.0）；2026/10/30 至 11/04 產出並寄出 6 期個人研究電子報，涵蓋 GitHub 專案分析、實驗提案與 AIoT Day 1–3 微課。</p>
+          </section>
+
+          <section id="4">
+            <h2>仍待驗證</h2>
+            <p>藍圖不等於全自動排程已穩定運行。既有郵件能證明內容產出與寄送紀錄，但排程去重、失敗重試與本機持久化紀錄仍待實際部署後再做回歸驗證。</p>
+          </section>
+
+          <div class="cta" style="margin:24px 0 48px">
+            <div>
+              <h2>看完整的雙管線設計與 4 道 Gate</h2>
+              <p>文章內保留完整的輸入輸出模組與最小檔案結構設計。</p>
+            </div>
+            <a class="round-link" href="../journal/ai-research-workflow.html">閱讀 Workflow 拆解 ↗</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div>
+        <a class="logo" href="../index.html"><strong>nio<span>.</span>chen</strong><small>LAB &amp; NOTES</small></a>
+        <p>Built for readability &amp; verification. © 2026 Nio Chen</p>
+      </div>
+      <div class="footer-links">
+        <a href="../projects/index.html">作品與實驗室</a>
+        <a href="../journal/index.html">技術文章</a>
+        <a href="../about.html">關於</a>
+        <a href="https://github.com/minxinchen" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+      </div>
+    </div>
+  </footer>
+  <script defer src="../assets/site.js"></script>
+</body>
+</html>

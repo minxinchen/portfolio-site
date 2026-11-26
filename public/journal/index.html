@@ -1,1 +1,114 @@
-<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="theme-color" content="#fcfaf6"><meta name="description" content="Nio 的 GitHub 雷達、AI Agent 研究筆記與 B2B 技術案例。"><title>技術文章 · Nio</title><link rel="stylesheet" href="../assets/style.css"></head><body><header class="site-header"><div class="container head-inner"><a class="logo" href="../index.html" aria-label="Nio 首頁"><strong>Nio<span>.</span></strong><small>MINXIN CHEN</small></a><button class="menu-toggle" data-menu aria-expanded="false" aria-controls="main-nav">選單</button><nav class="site-nav" id="main-nav" aria-label="主選單"><a href="../index.html">首頁</a><a href="../projects/index.html">作品</a><a href="../journal/index.html" aria-current="page">文章</a><a href="../about.html">關於</a><a class="nav-contact" href="../about.html#contact">聯絡我 ↗</a></nav></div></header><main><div class="container"><header class="page-hero"><span class="smallcaps">JOURNAL / FIELD NOTES</span><h1>技術觀察與研究筆記</h1><p>閱讀工具，也閱讀它的限制。記錄 GitHub 新專案、Agent 工作方法、資料研究與實際專案的問題。</p></header><div class="journal-tools"><div class="filters" aria-label="文章分類"><button class="filter active" data-filter="全部" aria-pressed="true">全部</button><button class="filter" data-filter="Agent" aria-pressed="false">AI Agent</button><button class="filter" data-filter="GitHub" aria-pressed="false">GitHub 雷達</button><button class="filter" data-filter="B2B" aria-pressed="false">B2B / 資料</button></div><input class="search-input" type="search" data-search aria-label="搜尋文章" placeholder="搜尋文章主題…"></div><div class="journal-list"><a class="journal-row" data-post data-category="Agent" href="session-continuity.html"><span class="smallcaps">AGENT / NIO'S NOTES</span><h3>換了一個 Session，決策還留得住嗎？</h3><p>從對話交接失真，談專案狀態、權威來源與執行環境的角色。</p><div class="bottom"><span>研究筆記 · 草稿</span><span>閱讀全文 ↗</span></div></a><a class="journal-row" data-post data-category="GitHub" href="github-radar.html"><span class="smallcaps">GITHUB / NIO'S NOTES</span><h3>熱門工具很多，哪些值得真正試一遍？</h3><p>六期技術研究郵件背後，關於選題、查證與實驗設計的工作方法。</p><div class="bottom"><span>2026/10–11 · 整理稿</span><span>閱讀全文 ↗</span></div></a><a class="journal-row" data-post data-category="B2B" href="kiyan-experiment.html"><span class="smallcaps">B2B / NIO'S NOTES</span><h3>不是先改整個網站，而是先找出瓶頸。</h3><p>從一次行動版首頁效能改善，理解「診斷、試驗、上線、驗收」的順序。</p><div class="bottom"><span>案例筆記 · 草稿</span><span>閱讀全文 ↗</span></div></a></div><p data-empty hidden style="margin:20px 0;color:#796e66">目前沒有符合條件的文章。</p><div class="newsbar" style="margin-bottom:25px"><p>文章目前以研究筆記與整理稿形式呈現，並非正式定期刊物。</p><a href="../index.html" class="tiny-link">返回首頁</a></div></div></main><footer class="footer"><div class="container footer-inner"><div><a class="logo" href="../index.html"><strong>Nio<span>.</span></strong><small>MINXIN CHEN</small></a><p>研究、創作與持續修正。© 2026 Nio Chen</p></div><div class="footer-links"><a href="../projects/index.html">作品</a><a href="../journal/index.html">文章</a><a href="../about.html">關於</a><a href="https://github.com/minxinchen" target="_blank" rel="noopener noreferrer">GitHub ↗</a></div></div></footer><script defer src="../assets/site.js"></script></body></html>
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <script>try{const s=localStorage.getItem("color-scheme");if(s==="light"||s==="dark")document.querySelector('meta[name="color-scheme"]').content=s;}catch{}</script>
+  <meta name="description" content="Nio Chen 的技術部落格：GitHub 開源工具雷達、AI Workflow 設計、生醫文獻驗證實驗、多 Agent 協作踩坑與 B2B 效能實測。">
+  <title>技術文章 · Nio Chen</title>
+  <link rel="canonical" href="https://portfolio-site-1b8.pages.dev/journal/">
+  <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container head-inner">
+      <a class="logo" href="../index.html" aria-label="Nio 首頁"><strong>nio<span>.</span>chen</strong><small>LAB &amp; NOTES</small></a>
+      <nav class="site-nav" id="main-nav" aria-label="主選單">
+        <a href="../index.html">首頁</a>
+        <a href="../projects/index.html">作品與實驗室</a>
+        <a href="../journal/index.html" aria-current="page">技術文章</a>
+        <a href="../about.html">關於</a>
+        <a class="nav-contact" href="../about.html#contact">聯絡 ↗</a>
+      </nav>
+      <div class="head-tools">
+        <button class="theme-toggle" type="button" data-theme-toggle aria-label="切換深色或淺色模式">
+          <span class="mode-dark"><span aria-hidden="true">☾</span><span>深色</span></span>
+          <span class="mode-light"><span aria-hidden="true">☀</span><span>淺色</span></span>
+        </button>
+        <button class="menu-toggle" type="button" data-menu aria-expanded="false" aria-controls="main-nav">選單</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <header class="page-hero">
+        <span class="smallcaps">JOURNAL // TECHNICAL BLOG &amp; FIELD NOTES</span>
+        <h1>技術文章與實戰筆記</h1>
+        <p>這裡記錄我實際跑過的開源工具研究、AI 工作流設計、實驗驗證踩坑與 B2B 網站實測。不追求包裝成完美教學，重點是把判斷依據、失敗案例和邊界條件寫清楚。</p>
+      </header>
+
+      <div class="journal-tools">
+        <div class="filters" aria-label="文章分類">
+          <button class="filter active" type="button" data-filter="全部" aria-pressed="true">全部 (5)</button>
+          <button class="filter" type="button" data-filter="開源雷達" aria-pressed="false">開源雷達</button>
+          <button class="filter" type="button" data-filter="AI 工作流" aria-pressed="false">AI 工作流</button>
+          <button class="filter" type="button" data-filter="驗證與實測" aria-pressed="false">驗證與實測</button>
+        </div>
+        <input class="search-input" type="search" data-search aria-label="搜尋文章" placeholder="搜尋關鍵字（如 pstack、雙盲、LCP）…">
+      </div>
+
+      <div class="journal-list">
+        <a class="journal-row" data-post data-category="開源雷達" href="github-radar.html">
+          <span class="smallcaps">開源雷達 // OPEN SOURCE</span>
+          <h3>GitHub 開源工具實作雷達：為什麼我看重 Superpowers、pstack 與 Ponytail 這類設計？</h3>
+          <p>Star 數只是關注訊號，不是品質或適配性的證據。分享我評估開源工具的篩選尺規，以及這幾個專案在「少即是多」與規格適配上的啟發。</p>
+          <div class="bottom"><span>2026-11 · 技術觀察</span><span>閱讀全文 ↗</span></div>
+        </a>
+
+        <a class="journal-row" data-post data-category="AI 工作流" href="ai-research-workflow.html">
+          <span class="smallcaps">AI 工作流 // BLUEPRINT</span>
+          <h3>把每日技術追蹤拆成兩條管線：GitHub 雷達 × AIoT 微課的 Workflow 設計</h3>
+          <p>把原本混在一起的定時追蹤拆成兩條獨立生產線，加上 4 道 Quality Gate 與最小持久化檔案結構，確保不把構想寫成實測。</p>
+          <div class="bottom"><span>2026-11 · 流程設計</span><span>閱讀全文 ↗</span></div>
+        </a>
+
+        <a class="journal-row" data-post data-category="驗證與實測" href="compression-validation.html">
+          <span class="smallcaps">驗證與實測 // AI VALIDATION</span>
+          <h3>跑出 100% 通過率之後，為什麼我反而懷疑這套 AI 流程沒測出東西？</h3>
+          <p>在 10 篇腸腦軸 PMC 生醫論文壓縮實驗中，抓出指標飽和、變因未隔離、評審雙盲錨定，以及中文評估標籤「踩了／沒踩」的雙向歧義。</p>
+          <div class="bottom"><span>2026-05 · 實驗筆記</span><span>閱讀全文 ↗</span></div>
+        </a>
+
+        <a class="journal-row" data-post data-category="AI 工作流" href="session-continuity.html">
+          <span class="smallcaps">AI 工作流 // MULTI-AGENT</span>
+          <h3>多 Agent 協作的踩坑紀錄：什麼時候該喊停，哪些決定不能交給 AI</h3>
+          <p>從「計劃性喊停」、定性權與執行權分離，到「Codex 釐清需求 → 人拍板 → Claude 執行」與同 Session 多工導致注意力分散的實戰紀錄。</p>
+          <div class="bottom"><span>2026-05 · 協作紀錄</span><span>閱讀全文 ↗</span></div>
+        </a>
+
+        <a class="journal-row" data-post data-category="驗證與實測" href="kiyan-experiment.html">
+          <span class="smallcaps">驗證與實測 // B2B SEO</span>
+          <h3>不是先改整個網站，而是先找出瓶頸：B2B 網站效能隔離測試與內容查核</h3>
+          <p>從行動版首頁 Mobile LCP 13.10s → 3.16s → 2.72s 的隔離試驗，談 B2B 技術內容的雙路徑查核與「有設備 ≠ 會操作」的邏輯邊界。</p>
+          <div class="bottom"><span>2026-05 · B2B 實戰</span><span>閱讀全文 ↗</span></div>
+        </a>
+      </div>
+
+      <p data-empty hidden style="margin:24px 0;color:var(--mute);font-family:var(--mono);font-size:13.5px">目前沒有符合篩選條件的文章。</p>
+
+      <div class="newsbar" style="margin-bottom:20px">
+        <p>文章會隨後續實驗與新證據持續增補；已實測結果與未部署藍圖皆在文內分開標示。</p>
+        <a href="../projects/index.html" class="tiny-link">看互動工具與 GitHub 實驗室</a>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div>
+        <a class="logo" href="../index.html"><strong>nio<span>.</span>chen</strong><small>LAB &amp; NOTES</small></a>
+        <p>Built for readability &amp; verification. © 2026 Nio Chen</p>
+      </div>
+      <div class="footer-links">
+        <a href="../projects/index.html">作品與實驗室</a>
+        <a href="../journal/index.html">技術文章</a>
+        <a href="../about.html">關於</a>
+        <a href="https://github.com/minxinchen" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+      </div>
+    </div>
+  </footer>
+  <script defer src="../assets/site.js"></script>
+</body>
+</html>
