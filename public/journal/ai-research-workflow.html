@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <script>try{const s=localStorage.getItem("color-scheme");if(s==="light"||s==="dark")document.querySelector('meta[name="color-scheme"]').content=s;}catch{}</script>
-  <meta name="description" content="收完六期每日技術日報後停掉原排程，改畫成 GitHub 雷達與 AIoT 微課雙管線藍圖、4 道 Quality Gate 與最小檔案結構。">
-  <title>單一 Prompt 排程壞掉之後：我怎麼把技術日報拆成雙管線 · Nio Chen</title>
+  <meta name="description" content="收完六期 GitHub AI 實作雷達日報後停掉原排程，改畫成階段式研究管線、3 道 Quality Gate 與最小持久化檔案結構。">
+  <title>單一 Prompt 排程壞掉之後：我怎麼重構 GitHub 技術雷達管線 · Nio Chen</title>
   <link rel="canonical" href="https://portfolio-site-1b8.pages.dev/journal/ai-research-workflow.html">
   <link rel="stylesheet" href="../assets/style.css">
 </head>
@@ -37,8 +37,8 @@
         <header class="article-head">
           <a class="back-link" href="index.html">← 返回技術文章</a>
           <p class="smallcaps" style="margin:22px 0 0">AI 工作流 // BLUEPRINT v1.0</p>
-          <h1>單一 Prompt 排程壞掉之後：我怎麼把技術日報拆成雙管線</h1>
-          <p class="lead">收完第六期自己排程的每日技術信後，我直接把它暫停了——沒抓到 7 日快照的專案被混進排行、未實作的點子寫得像跑過實測，寄信失敗也沒有去重紀錄。這篇記錄拆成雙管線後的 Blueprint。</p>
+          <h1>單一 Prompt 排程壞掉之後：我怎麼重構 GitHub 技術雷達管線</h1>
+          <p class="lead">收完六期自己排程的 GitHub 技術日報後，我直接把它暫停了——沒抓到 7 日快照的專案被混進排行、未實作的點子寫得像跑過實測，寄信失敗也沒有去重紀錄。這篇記錄拆成階段式管線後的 Blueprint。</p>
           <div class="article-info">
             <span>Nio Chen</span>
             <span>2026-11</span>
@@ -47,22 +47,22 @@
         </header>
 
         <article class="article-prose">
-          <p>原本的設定是每天早上九點由單一排程同時產「GitHub 熱門開源分析」跟「AIoT 每日一課」。兩件事混在同一段執行裡，只要一邊抓不到資料，另一邊就跟著變形。拆開後的結構改成分流產出、合流檢查：</p>
+          <p>原本的做法是用單一排程 Prompt 每天早上九點直接產一封研究信，結果發現一個步驟沒抓到資料，後面整段分析就開始腦補。重構後把整條研究流程拆成「資料蒐集與查證」跟「評分與 Case Study 拆解」兩段，中間加上明確的檢查關卡：</p>
 
           <div class="flow-grid">
             <div class="flow-node">
-              <div class="tag">PIPELINE A // GITHUB RADAR</div>
-              <strong>發現 → 查證 → 評分 → 拆一個 Case Study</strong>
-              <p>排除歷史已推薦與灌星專案；核對 README、commits 與同窗口 7 日 Star 變化；依 Star 速度 50% / 加速度 20% / 落地 15% / 適配 10% / 安全 5% 選出 2–4 項，挑一個拆成可驗收 MVP 提案。</p>
+              <div class="tag">STAGE 1 // DISCOVERY &amp; VERIFY</div>
+              <strong>發現候選 → 去重 → 核對來源與同窗口快照</strong>
+              <p>從 GitHub Trending 與搜尋撈候選專案，排除歷史已推薦與疑似灌星項目；核對 README、commits、releases 與同起訖日期的 7 日 Star 變化。</p>
             </div>
             <div class="flow-node earth">
-              <div class="tag">PIPELINE B // AIoT MICRO-LESSON</div>
-              <strong>讀進度 → 200–350 字微課 → 無硬體練習 → 接回 Agent</strong>
-              <p>照 Day 1–11 課綱選下一單元（目前跑到 Day 3）；用生活或工業例子講一個觀念，附上不用買設備的模擬題，並分清楚「固定閾值規則」跟「真正的 AI 推論」。</p>
+              <div class="tag">STAGE 2 // SCORING &amp; CASE STUDY</div>
+              <strong>加權篩選 2–4 項 → 深入拆解一個 MVP 提案</strong>
+              <p>僅對具備可比快照的專案計分（Star 速度 50% / 加速度 20% / 落地 15% / 適配 10% / 安全 5%），挑一個拆出問題、基準組、實驗組與失敗條件。</p>
             </div>
           </div>
 
-          <h2>合流前的四道檢查關卡</h2>
+          <h2>寄出前的三道檢查關卡</h2>
           <details open>
             <summary>Gate 1｜Star 資料是否可比較？</summary>
             <ul>
@@ -79,14 +79,7 @@
             </ul>
           </details>
           <details>
-            <summary>Gate 3｜AIoT 課程是否對齊初學者？</summary>
-            <ul>
-              <li>每期只教一個新概念，前置不足就先補背景。</li>
-              <li>固定閾值觸發屬於規則控制，不掛上「智慧」兩字就叫 AI。</li>
-            </ul>
-          </details>
-          <details>
-            <summary>Gate 4｜寄送失敗怎麼處理？</summary>
+            <summary>Gate 3｜寄送失敗怎麼處理？</summary>
             <ul>
               <li>寄出前先查當日 Run Log，防止重複發信。</li>
               <li>HTML 生成失敗保留草稿並標記失敗；只有收到郵件服務回傳的 Message ID，才更新為已寄送。</li>
@@ -94,13 +87,12 @@
           </details>
 
           <h2>最小持久化檔案結構</h2>
-          <p>先不上資料庫，用純檔案就能直接進 Git 追蹤每次執行與失敗原因：</p>
+          <p>先不上資料庫，用純檔案就能直接進 Git 追蹤每次執行、來源快照與失敗原因：</p>
           <pre><code>workflow/
   config.yaml             # 排程、主題、評分權重、收件設定
   runs/YYYY-MM-DD.json    # 當日狀態、錯誤與郵件 ID
   sources/                # Star 快照、README 來源與時間戳
   history/repos.json      # 已推薦專案清單，避免重複
-  lessons/progress.json   # AIoT 課程進度（已至 Day 3，恢復時接 Day 4）
   reports/YYYY-MM-DD.html # 寄送前的 HTML 產物
   evaluations/            # Quality Gate 審查紀錄</code></pre>
 
