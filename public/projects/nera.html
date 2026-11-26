@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <script>try{const s=localStorage.getItem("color-scheme");if(s==="light"||s==="dark")document.querySelector('meta[name="color-scheme"]').content=s;}catch{}</script>
-  <meta name="description" content="NERA／九衡：TCGA-KIRC（N=524）資料來源稽核、Python/R 存活交叉驗證，以及 Agent 有限授權與證據治理紀錄。">
-  <title>NERA／九衡 · Nio Chen</title>
+  <meta name="description" content="NERA／九衡停損覆盤：當初為什麼用九宮格做跨領域 PRD 與盲區檢查、後來為何主動停掉，以及最後留下來的 TCGA-KIRC 存活敏感度實驗室。">
+  <title>NERA／九衡 停損覆盤 · Nio Chen</title>
   <link rel="canonical" href="https://portfolio-site-1b8.pages.dev/projects/nera.html">
-  <meta property="og:title" content="NERA／九衡 · Nio Chen">
-  <meta property="og:description" content="TCGA-KIRC 524 人公開臨床資料稽核、CP04 v2 交叉驗證陰性結論與多代理有限授權研究。">
+  <meta property="og:title" content="NERA／九衡 停損覆盤 · Nio Chen">
+  <meta property="og:description" content="為什麼主動停掉九宮格 PRD 框架，只留下經得起檢驗的 TCGA-KIRC（N=524）互動實驗室。">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://portfolio-site-1b8.pages.dev/projects/nera.html">
   <meta property="og:image" content="https://portfolio-site-1b8.pages.dev/assets/og-card.png">
@@ -41,72 +41,66 @@
       <div class="case-header">
         <div>
           <a class="back-link" href="index.html">← 返回作品與實驗室</a>
-          <p style="margin-top:16px" class="smallcaps">BIOMEDICAL EVIDENCE × AGENT GOVERNANCE</p>
-          <h1>NERA／九衡</h1>
-          <p>以 TCGA-KIRC（N=524）真實公開臨床資料為場景，探索 Agent 如何在有限授權下進行目標拆解、平行審查與統計證據驗證。</p>
+          <p style="margin-top:16px" class="smallcaps">POST-MORTEM // STOP-LOSS RECORD</p>
+          <h1>NERA／九衡（停損覆盤）</h1>
+          <p>原本想用「九宮格」結構把跨領域需求拆成可審查的 PRD，讓 AI 幫忙抓出不熟領域的知識盲區。做到後來確認框架本身已無邊際效益，決定停掉，只把實際驗證過的生醫資料實驗獨立抽出來保留。</p>
           <div class="case-meta">
-            <span class="pill">TCGA-KIRC (N=524)</span>
-            <span class="pill">互動實驗室已上線</span>
-            <span class="pill">保留陰性結論</span>
+            <span class="pill">已停損封存</span>
+            <span class="pill">TCGA-KIRC 實驗室已獨立上線</span>
           </div>
           <div class="hero-actions">
-            <a class="round-link" href="../tools/survival-evidence-lab/">開啟存活敏感度實驗室 ↗</a>
-            <a class="round-link alt" href="../journal/compression-validation.html">閱讀 AI 驗證方法筆記</a>
+            <a class="round-link" href="../tools/survival-evidence-lab/">開啟留下的 TCGA-KIRC 實驗室 ↗</a>
+            <a class="round-link alt" href="../journal/github-radar.html">看開源工具選型筆記</a>
           </div>
         </div>
         <div class="case-art" aria-hidden="true"><span>N.</span></div>
       </div>
 
       <div class="case-stats">
-        <div class="case-stat"><div class="stat-label">驗證資料集</div><strong>TCGA-KIRC 公開臨床資料（N=524）</strong></div>
-        <div class="case-stat"><div class="stat-label">統計驗證</div><strong>分層 Cox + R cox.zph 交叉檢查</strong></div>
-        <div class="case-stat"><div class="stat-label">關鍵結論</div><strong>CP04 v2 交叉驗證為陰性（誠實保留）</strong></div>
+        <div class="case-stat"><div class="stat-label">專案狀態</div><strong>框架停損・實驗室獨立保留</strong></div>
+        <div class="case-stat"><div class="stat-label">核心遺產</div><strong>TCGA-KIRC（N=524）交叉驗證</strong></div>
+        <div class="case-stat"><div class="stat-label">停損原因</div><strong>被新一代模型與 Superpowers 取代</strong></div>
       </div>
 
       <div class="case-layout">
         <nav class="case-sidebar" aria-label="案例章節">
-          <a href="#1">01 · 原始問題</a>
-          <a href="#2">02 · 治理與驗證做法</a>
-          <a href="#3">03 · 實際進展與互動展示</a>
-          <a href="#4">04 · 能力邊界與限制</a>
+          <a href="#1">01 · 當初想解什麼</a>
+          <a href="#2">02 · 為什麼決定停掉</a>
+          <a href="#3">03 · 最後留下了什麼</a>
+          <a href="#4">04 · 帶到下一個專案的教訓</a>
         </nav>
 
         <div class="case-content">
           <section id="1">
-            <h2>原始問題</h2>
-            <p>Agent 可以很快寫出一套看似完整的分析腳本與報告，但常常在三個地方失真：忘記原始研究目標與停止條件、在跨 Session 交接時把假設當成已驗證結論，或是為了「做出顯著結果」而無意間滑向切點挑選（P-hacking）。</p>
+            <h2>當初想解什麼</h2>
+            <p>跨領域工作最容易撞到的牆是「不知道自己不知道什麼」。例如剛做 SEO 時，我以為把網站改得讓搜尋引擎與 AI 容易讀就好，於是花很多時間疊 JSON-LD 與 Schema；直到面試被問到關鍵字集叢、防止站內關鍵字打架與內外鏈配置，才意識到 AI 只會順著我問的方向做到滿分，不會主動提醒我漏掉的那半個戰場。</p>
+            <p>NERA（九衡）原本的初衷，就是試著用九宮格框架強迫拆解目標、邊界、風險與反例，搭配平行 Reviewer 檢查，看能不能在進入陌生領域前先逼出盲區。</p>
           </section>
 
           <section id="2">
-            <h2>治理與驗證做法</h2>
-            <p>以中心 Goal 為起點，允許有界拆解，但每個子任務都必須回到父目標驗收。審查意見、Lead 裁決、官方資料來源收據（source receipt）與人類授權明確分離；生醫分析端則同時用 Python 與 R（<code>cox.zph</code> 等假設檢定）做交叉核對。</p>
-            <div class="visual-panel dark">
-              <p style="margin:0 0 14px;font-weight:700;color:var(--inv-ink)">治理與證據鏈設計</p>
-              <div class="steps">
-                <div class="step"><span>01</span><strong>人類 Goal</strong></div>
-                <div class="step"><span>02</span><strong>有界拆解</strong></div>
-                <div class="step"><span>03</span><strong>獨立 Reviewer</strong></div>
-                <div class="step"><span>04</span><strong>實測與授權</strong></div>
-              </div>
-              <p style="font-size:12.5px;margin:14px 0 0">註：這是治理與驗證流程設計，不代表所有關卡已部署為無人值守的自動化服務。</p>
-            </div>
+            <h2>為什麼決定停掉</h2>
+            <ul>
+              <li><strong>模型原生理解力已經追上：</strong>從 Claude Code 出現到現在，模型本身對需求拆解與規格補全的能力已經足夠強，硬套一層九宮格反而增加撰寫與維護成本。</li>
+              <li><strong>開源已有更成熟的替代方案：</strong>像 Superpowers 這類開源工程工作流已經把規劃、測試、驗證蒸餾得很乾淨，沒有必要自己重造一套通用 PRD 框架。</li>
+              <li><strong>規則檢查本身也會漏：</strong>在 NERA 的變異測試裡，刻意移除部分規則後，既有測試仍未完全擋下——代表繼續疊抽象治理層，只會變成維護成本高於收益的薄包裝。</li>
+            </ul>
           </section>
 
           <section id="3">
-            <h2>實際進展與互動展示</h2>
-            <p>在 TCGA-KIRC 524 位腎細胞癌公開臨床資料上，我們完成了官方來源稽核、分層存活分析與 CP04 v2 交叉驗證，並把結果做成純靜態預計算的互動工具——你可以直接在 <a href="../tools/survival-evidence-lab/" style="color:var(--accent);text-decoration:underline;text-underline-offset:3px">TCGA-KIRC 存活敏感度實驗室</a> 拖動年齡切點，親眼觀察單一指標如何因為切點挑選產生假象，並查看 CP04 v2 交叉驗證的陰性結論。</p>
-            <p>在治理測試端，也透過破壞／變異測試（刻意移除部分規則檢查）發現某些規則在移除後仍未被既有測試擋下，將這些缺口保留為後續修正線索，而非包裝成 100% 通過率。</p>
+            <h2>最後留下了什麼</h2>
+            <p>框架停掉了，但過程中用真實資料跑完的驗證成果並沒有浪費。我們在 TCGA-KIRC 524 位腎細胞癌公開臨床資料上完成了官方來源稽核、分層 Cox 模型與 R <code>cox.zph</code> 交叉檢查，並把結果獨立做成純靜態的 <a href="../tools/survival-evidence-lab/" style="color:var(--accent);text-decoration:underline;text-underline-offset:3px">TCGA-KIRC 存活敏感度實驗室</a>。</p>
+            <p>點進去可以直接拖動年齡切點觀察 P-hacking 如何產生假象，並查看 CP04 v2 交叉驗證的陰性結論（僅供統計方法教學與展示，非臨床建議）。</p>
           </section>
 
           <section id="4">
-            <h2>能力邊界與限制</h2>
-            <p>本專案的互動展示與分析僅供統計方法教學、資料查核與作品展示，<strong>不構成臨床建議，亦未宣稱已通過正式醫學同儕審查</strong>。既有雲端協作流程仍依賴人工把關關鍵 Gate，無法取代合格領域專家的科學審查。</p>
+            <h2>帶到下一個專案的教訓</h2>
+            <p>停掉 NERA 之後，我把重心從「做抽象框架」轉回「做具體人群打開就能用的小工具」。像面試發現自己漏掉站內重複標題與內外鏈盲區後，就沒有再寫一份治理文件，而是直接把 Sitemap 10 頁抽樣、重複標題偵測與跨頁內鏈建議做進了 <a href="../tools/wp-search-lab/" style="color:var(--accent);text-decoration:underline;text-underline-offset:3px">WP Search Lab</a>。</p>
           </section>
 
           <div class="cta" style="margin:24px 0 48px">
             <div>
-              <h2>直接進實驗室拖動切點看資料</h2>
-              <p>純靜態預計算、免登入，包含 KM 存活曲線與 CP04 v2 交叉驗證森林圖。</p>
+              <h2>直接操作留下來的生醫資料實驗室</h2>
+              <p>TCGA-KIRC（N=524）純靜態預計算互動工具，含切點滑桿與交叉驗證森林圖。</p>
             </div>
             <a class="round-link" href="../tools/survival-evidence-lab/">開啟存活敏感度實驗室 ↗</a>
           </div>
@@ -119,7 +113,7 @@
     <div class="container footer-inner">
       <div>
         <a class="logo" href="../index.html"><strong>nio<span>.</span>chen</strong><small>LAB &amp; NOTES</small></a>
-        <p>Built for readability &amp; verification. © 2026 Nio Chen</p>
+        <p>© 2026 Nio Chen · Built with static HTML &amp; Cloudflare Pages</p>
       </div>
       <div class="footer-links">
         <a href="../projects/index.html">作品與實驗室</a>
