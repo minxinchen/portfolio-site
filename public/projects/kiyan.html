@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <script>try{const s=localStorage.getItem("color-scheme");if(s==="light"||s==="dark")document.querySelector('meta[name="color-scheme"]').content=s;}catch{}</script>
-  <meta name="description" content="把工程規格、搜尋結構與網站效能整理成可以小範圍測試、逐項驗收的改善任務。">
-  <title>KIYAN 網站優化 · Nio Chen</title>
+  <meta name="description" content="B2B 工業設備多語系統實戰案例：首屏效能隔離測試（Mobile LCP 13.10s→2.72s）、GSC 未索引分流、舊轉址內鏈清零與免 GA4 表單來源歸因。">
+  <title>B2B 工業多語系統優化 · Nio Chen</title>
   <link rel="canonical" href="https://portfolio-site-1b8.pages.dev/projects/kiyan.html">
   <link rel="stylesheet" href="../assets/style.css">
 </head>
@@ -36,65 +36,69 @@
       <div class="case-header">
         <div>
           <a class="back-link" href="index.html">← 返回作品與實驗室</a>
-          <p style="margin-top:16px" class="smallcaps">B2B 技術行銷 × 網站效能改善</p>
-          <h1>KIYAN 網站優化</h1>
-          <p>把工程規格、搜尋結構與行動版首頁效能整理成可以小範圍隔離測試、逐項驗收的改善任務。</p>
-          <div class="case-meta"><span class="pill">實際網站優化</span><span class="pill">Mobile LCP 13.10s→2.72s</span></div>
+          <p style="margin-top:16px" class="smallcaps">B2B 多語系統 × SEO／AIO × 效能與轉換改善</p>
+          <h1>B2B 工業多語系統優化</h1>
+          <p>將多語系統的工程規格、搜尋結構、行動版首屏效能與表單來源歸因，拆成可隔離測試、可回滾、逐項驗收的長期改善任務（本文已完整去識別化）。</p>
+          <div class="case-meta"><span class="pill">實際網站優化</span><span class="pill">Mobile LCP 13.10s→2.72s</span><span class="pill">舊轉址內鏈歸零</span></div>
           <div class="hero-actions">
-            <a class="round-link" href="../journal/kiyan-experiment.html">閱讀實測與內容查核筆記 ↗</a>
-            <a class="round-link alt" href="https://github.com/minxinchen/seo-aio-b2b-case-study" target="_blank" rel="noopener noreferrer">GitHub 實戰資料 ↗</a>
+            <a class="round-link" href="../journal/gsc-not-indexed-triage.html">閱讀 GSC 未索引拆解指南 ↗</a>
+            <a class="round-link alt" href="../journal/kiyan-experiment.html">閱讀首屏隔離測試筆記</a>
           </div>
         </div>
-        <div class="case-art" aria-hidden="true"><span>K.</span></div>
+        <div class="case-art" aria-hidden="true"><span>B.</span></div>
       </div>
 
       <div class="case-stats">
-        <div class="case-stat"><div class="stat-label">專案類型</div><strong>B2B 工業多語網站</strong></div>
-        <div class="case-stat"><div class="stat-label">核心改進</div><strong>Mobile 首屏載入瓶頸</strong></div>
-        <div class="case-stat"><div class="stat-label">驗證方式</div><strong>隔離對照測試＋公開頁檢查</strong></div>
+        <div class="case-stat"><div class="stat-label">專案類型</div><strong>B2B 工業多語系統</strong></div>
+        <div class="case-stat"><div class="stat-label">核心改進</div><strong>首屏效能＋架構止跌＋表單歸因</strong></div>
+        <div class="case-stat"><div class="stat-label">驗證方式</div><strong>隔離對照＋匿名公開掃描＋固定觀察窗</strong></div>
       </div>
 
       <div class="case-layout">
         <nav class="case-sidebar" aria-label="案例章節">
           <a href="#1">01 · 原始問題</a>
-          <a href="#2">02 · 做法與量測</a>
-          <a href="#3">03 · 案例紀錄</a>
-          <a href="#4">04 · 仍待驗證</a>
+          <a href="#2">02 · 首屏效能隔離實測</a>
+          <a href="#3">03 · 多語系統 SEO／AIO 與轉換補救</a>
+          <a href="#4">04 · 誠實邊界與待驗證項</a>
         </nav>
 
         <div class="case-content">
           <section id="1">
             <h2>原始問題</h2>
-            <p>比例閥網站同時涉及三語內容、產品型錄與搜尋引擎。首屏載入緩慢、規格資料在不同頁面不一致，單純升級主機或重寫文案不一定能解決核心瓶頸。</p>
+            <p>這套 B2B 工業設備官網同時維護多語系統、產品規格頁與技術文章。初期面臨四大痛點：手機首屏載入過慢（13.10 秒）、不同語系與型錄之間的規格不一致、舊版網址改版後站內仍殘留大量轉址連結，以及高曝光知識文被 AI 摘要分流後 CTR 掉到 1% 以下卻導不進詢價表單。</p>
           </section>
 
           <section id="2">
-            <h2>做法與量測</h2>
-            <p>先釐清產品規格單一真實來源，整理頁面結構與 SEO；對行動版首頁先做隔離實驗，只替換首屏呈現以確認瓶頸，驗證方向正確後再正式上線。</p>
+            <h2>首屏效能隔離實測</h2>
+            <p>面對 13.10 秒的行動版 LCP，沒有直接建議換主機或裝一堆外掛，而是先開一頁隔離對照測試，只替換首屏呈現確認真正瓶頸；驗證方向正確後再正式調整上線。</p>
             <div class="visual-panel">
               <p style="margin:0 0 9px;font-family:var(--mono);font-size:11.5px;color:var(--accent)">CASE RECORD // MOBILE LCP</p>
               <div class="metric-compare"><strong>13.10s</strong><span>→</span><strong>3.16s</strong><span>→</span><strong>2.72s</strong></div>
               <div style="display:flex;justify-content:space-between;color:var(--mute);font-family:var(--mono);font-size:11.5px;margin-top:6px"><span>修改前</span><span>隔離測試</span><span>正式調整</span></div>
-              <p style="margin:12px 0 0;font-size:12.5px">註：以上取自既有案例量測紀錄，不代表目前即時 Live Lighthouse 結果。</p>
+              <p style="margin:12px 0 0;font-size:12.5px">註：取自既有案例量測紀錄，不代表即時 Live Lighthouse 結果。</p>
             </div>
           </section>
 
           <section id="3">
-            <h2>案例紀錄</h2>
-            <p>依既有紀錄，Mobile LCP 由 13.10 秒經隔離測試降至 3.16 秒，正式調整後約 2.72 秒。同步整理三語頁面、Schema、轉址、連結與公開頁檢查紀錄。</p>
+            <h2>多語系統 SEO／AIO 與轉換補救</h2>
+            <ul>
+              <li><strong>拆穿「117 筆未索引」假警報：</strong>逐筆拆解 Search Console 未索引清單，確認其中 116 筆為 WordPress 預設 `/feed/`、靜態 CSS/JS、歷史 301 與搜尋頁 `noindex`，真正未收錄的文章僅 1 篇，避免盲目大幅改動。</li>
+              <li><strong>清零站內舊轉址內鏈與程式覆寫債：</strong>全站掃描 117 個公開頁面、清掉 35 處指向舊路徑的內部連結，並停用背景硬覆寫 SEO 欄位的過時 PHP 片段，讓後台編輯器與前台輸出回復一致。</li>
+              <li><strong>主力語系 CTR 改寫與免 GA4 詢價歸因：</strong>針對實際帶來詢價的主力語系高曝光文章，改寫為「定義／公式＋工業選型實務」標題並在中段與文末植入產品橋接卡片；考量業主未導入 GA4，改以表單隱藏欄位搭配 15 行 `sessionStorage` 腳本，直接在 WordPress 後台記錄每筆詢價的首次進站頁面與來源。</li>
+            </ul>
           </section>
 
           <section id="4">
-            <h2>仍待驗證</h2>
-            <p>載入效能改善不等於搜尋排名或營收成長。GSC 的正反趨勢需要分開呈現，不能將前後變化直接解釋為單一改動的因果效果；外部數據仍應依來源日期核實。</p>
+            <h2>誠實邊界與待驗證項</h2>
+            <p>我們嚴格區分三種驗收：<strong>網站交付（匿名 HTTP 200／內鏈／版面通過）</strong>、<strong>搜尋引擎重爬</strong>、以及<strong>固定 28 日搜尋與詢價結果</strong>。技術結構與載入速度改善，不等於排名或營收保證；近期補救批次仍在固定 28 日觀察窗內，未達結案時間前不宣稱成效，所有數據均保留正反訊號。</p>
           </section>
 
           <div class="cta" style="margin:24px 0 48px">
             <div>
-              <h2>想看更完整的隔離試驗與 B2B 查核思路？</h2>
-              <p>完整實戰筆記收錄在技術文章區，可與 WP Search Lab 搭配看。</p>
+              <h2>想直接試用這套方法整理出來的免費檢測工具？</h2>
+              <p>我們把 GSC 未索引分流、WordPress 結構檢查與白話新手 FAQ 整合進 WP Search Lab，免登入就能操作。</p>
             </div>
-            <a class="round-link" href="../journal/kiyan-experiment.html">閱讀實戰文章 ↗</a>
+            <a class="round-link" href="../tools/wp-search-lab/">開啟 WP Search Lab ↗</a>
           </div>
         </div>
       </div>

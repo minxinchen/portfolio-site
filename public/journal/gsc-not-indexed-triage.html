@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <script>try{const s=localStorage.getItem("color-scheme");if(s==="light"||s==="dark")document.querySelector('meta[name="color-scheme"]').content=s;}catch{}</script>
+  <meta name="description" content="Google Search Console 出現大量「已檢索－目前尚未建立索引」怎麼辦？3 步驟區分 /feed/ 假警報、舊轉址內鏈與真正未收錄的文章，附免費一鍵分流工具。">
+  <title>GSC「已檢索－目前尚未建立索引」怎麼辦？3 步驟區分假警報與真問題 · Nio Chen</title>
+  <link rel="canonical" href="https://portfolio-site-1b8.pages.dev/journal/gsc-not-indexed-triage.html">
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"GSC 顯示上百頁「未建立索引」，代表網站被 Google 懲罰了嗎？","acceptedAnswer":{"@type":"Answer","text":"不一定。WordPress 網站常見大量 /feed/ 訂閱檔、佈景主題 CSS/JS、站內搜尋頁或歷史 301 轉址出現在未索引報表中，這些本來就不該出現在 Google 搜尋結果，必須先分類再判斷。"}},{"@type":"Question","name":"需要把每一頁「已檢索－目前尚未建立索引」都按「要求建立索引」嗎？","acceptedAnswer":{"@type":"Answer","text":"不需要。只針對真正有價值的內容頁或產品頁檢查內容厚度與內部連結；對 /feed/、靜態檔或舊轉址反覆送審不但無效，還可能浪費處理時間。"}},{"@type":"Question","name":"舊網址已經設好 301 轉址，為什麼 Google 還是反覆去爬它？","acceptedAnswer":{"@type":"Answer","text":"最常見原因是站內舊文章、頁尾小工具或選單裡還留著指向舊網址的連結。把站內連結直接改成最終 HTTP 200 網址，就能減少爬蟲重複耗損。"}}]}</script>
+  <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container head-inner">
+      <a class="logo" href="../index.html" aria-label="Nio 首頁"><strong>nio<span>.</span>chen</strong><small>LAB &amp; NOTES</small></a>
+      <nav class="site-nav" id="main-nav" aria-label="主選單">
+        <a href="../index.html">首頁</a>
+        <a href="../projects/index.html">作品與實驗室</a>
+        <a href="../journal/index.html" aria-current="page">技術文章</a>
+        <a href="../about.html">關於</a>
+        <a class="nav-contact" href="../about.html#contact">聯絡 ↗</a>
+      </nav>
+      <div class="head-tools">
+        <button class="theme-toggle" type="button" data-theme-toggle aria-label="切換深色或淺色模式">
+          <span class="mode-dark"><span aria-hidden="true">☾</span><span>深色</span></span>
+          <span class="mode-light"><span aria-hidden="true">☀</span><span>淺色</span></span>
+        </button>
+        <button class="menu-toggle" type="button" data-menu aria-expanded="false" aria-controls="main-nav">選單</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <div class="reading">
+        <header class="article-head">
+          <a class="back-link" href="index.html">← 返回技術文章</a>
+          <p class="smallcaps" style="margin:22px 0 0">驗證與實測 // TECHNICAL SEO &amp; GSC</p>
+          <h1>GSC「已檢索－目前尚未建立索引」怎麼辦？3 步驟區分假警報與真問題</h1>
+          <p class="lead"><strong>先講結論：</strong>看到 Google Search Console（GSC）跳出上百頁「未建立索引」，先別急著重寫文章或狂按「要求建立索引」。在 WordPress 網站裡，未索引總數往往有超過 8 成是 <code>/feed/</code>、樣式檔與舊轉址等正常雜訊；先把清單拆成 5 桶，你通常只需要修極少數真正該收錄的頁面。</p>
+          <div class="article-info">
+            <span>Nio Chen</span>
+            <span>2026-11</span>
+            <span>搭配工具：<a href="../tools/wp-search-lab/" style="color:var(--accent)">WP Search Lab 未索引分流器 ↗</a></span>
+          </div>
+        </header>
+
+        <article class="article-prose">
+          <div class="case-graphic">
+            <div style="font-family:var(--mono);font-size:11.5px;color:var(--accent-dark);margin-bottom:8px">QUICK TOC // 本文目錄</div>
+            <ul style="margin:0;padding-left:18px;font-size:14.5px">
+              <li><a href="#why">1. 為什麼「看總數」是最容易誤判的起點？</a></li>
+              <li><a href="#triage">2. 三步驟把未索引清單拆成 5 桶（附決策表）</a></li>
+              <li><a href="#case">3. 實戰佐證：一個 B2B 多語系統 117 筆未索引的真實拆解</a></li>
+              <li><a href="#faq">4. 新手常見問題（FAQ）</a></li>
+            </ul>
+          </div>
+
+          <h2 id="why">1. 為什麼「看總數」是最容易誤判的起點？</h2>
+          <p>用生活來比喻：如果你開了一家店，把「店門口的宣傳單、廚房收據、舊店搬家公告」全部算進「沒放上展示架的商品」，帳面上看起來一定很可怕。GSC 的「未建立索引」報表也是如此——它只是如實記錄 Google 爬蟲遇過哪些網址最後沒放進搜尋結果，<strong>並不代表那些網址全都是錯誤</strong>。</p>
+          <p>最怕的做法是沒看清清單內容，就一口氣大改網站架構、裝一堆快取或 SEO 外掛，甚至寫排程每天空存文章想「騙」Google 重爬，反而把原本正常的頁面改壞。</p>
+
+          <h2 id="triage">2. 三步驟把未索引清單拆成 5 桶</h2>
+          <p>進到 GSC 的「索引 → 網頁」，點開「已檢索－目前尚未建立索引」與「頁面會重新導向」，把網址清單複製出來，直接按下面這張表分類：</p>
+
+          <table>
+            <thead>
+              <tr><th>網址類型</th><th>特徵範例</th><th>代表什麼？</th><th>建議動作</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>WordPress 訂閱檔</strong></td><td>結尾有 <code>/feed/</code></td><td>文章或留言的 RSS 通知檔，不是給人看的網頁</td><td><strong>不用修</strong>；若無留言需求，可考慮關閉文章留言 feed</td></tr>
+              <tr><td><strong>系統零件與靜態檔</strong></td><td><code>/wp-content/</code>、<code>.css</code>、<code>.js</code>、<code>/wp-json/</code></td><td>網頁的樣式或程式零件，本來就不必出現在搜尋結果</td><td><strong>不用修</strong></td></tr>
+              <tr><td><strong>站內搜尋與分頁</strong></td><td><code>?s=</code>、<code>/search/</code>、<code>/page/2/</code></td><td>避免重複內容污染搜尋結果</td><td>維持 <code>noindex</code> 即可</td></tr>
+              <tr><td><strong>舊路徑轉址</strong></td><td>改版前的舊網址、<code>http://</code>、<code>www.</code></td><td>如果最近幾週仍被 Google 一直爬，代表站內還有舊連結</td><td><strong>回站內掃描</strong>，把文章、選單、頁尾的舊連結改成最終 200 網址</td></tr>
+              <tr><td><strong>真正的內容／產品頁</strong></td><td>正式文章、服務頁、產品頁</td><td>Google 爬過但覺得內容偏薄、重複或缺乏站內入口</td><td><strong>優先搶救</strong>：補強實務內容、改標題切角、增加站內連結</td></tr>
+            </tbody>
+          </table>
+
+          <p>不想人工一條一條看？我把這套分類邏輯做成免登入、不上傳資料的純瀏覽器小工具，直接貼上清單 1 秒就會分好：<a href="../tools/wp-search-lab/">開啟 WP Search Lab「06 未索引分流」↗</a>。</p>
+
+          <h2 id="case">3. 實戰佐證：B2B 工業多語系統 117 筆未索引的真實拆解</h2>
+          <p>在維護一套約 130 頁的 B2B 工業設備多語系統時，GSC 一度出現 <strong>117 筆未索引</strong>（其中 59 筆為「已檢索－目前尚未建立索引」、51 筆為「頁面會重新導向」）。如果只看表面總數，很容易誤以為全站索引崩壞。</p>
+          <p>實際逐筆拆開後，真相完全不同：</p>
+          <ul>
+            <li><strong>59 筆「已檢索未索引」裡，58 筆都是正常雜訊</strong>（49 筆 <code>/feed/</code>、7 筆主題 CSS/JS、1 筆 <code>/wp-json/</code>、1 支舊型錄 PDF），<strong>真正未收錄的文章只有 1 篇</strong>。</li>
+            <li><strong>51 筆「轉址」中，多筆舊產品路徑在最近一週仍被 Google 重爬</strong>；回頭掃描全站 117 個公開頁與選單後，果然抓出 <strong>35 處正文與頁尾還留著舊轉址連結</strong>。清完並匿名重掃全站後，舊轉址殘留連結歸零。</li>
+          </ul>
+          <p>這一步省下大量盲目改版的成本，讓我們能把力氣集中回真正影響流量的主力頁面與那 1 篇未收錄文章。</p>
+
+          <h2 id="faq">4. 新手常見問題（FAQ）</h2>
+          <details open>
+            <summary>GSC 顯示上百頁「未建立索引」，代表網站被懲罰了嗎？</summary>
+            <p>不是。大多數 WordPress 網站都會在這個報表看到 <code>/feed/</code>、靜態檔與歷史轉址，這些本來就不需要出現在搜尋結果裡。先分類、只看「真正的文章與產品頁」有多少沒收錄，才不會自己嚇自己。</p>
+          </details>
+          <details>
+            <summary>應該對每一頁未索引網址都按「要求建立索引」嗎？</summary>
+            <p>不要。只有「確定要曝光、而且已經修好內容或內鏈」的正式頁面才需要檢查索引狀態；對 <code>/feed/</code> 或轉址網址重複送審沒有任何幫助。</p>
+          </details>
+          <details>
+            <summary>修完站內舊連結與未收錄文章後，多久會看到結果？</summary>
+            <p>修改完成並通過匿名公開檢查只算「網站交付」，不等於 Google 立刻重爬或排名上升。通常建議第 7 天先看重爬時間是否前進，完整搜尋表現至少等固定 28 天觀察窗再比較。</p>
+          </details>
+
+          <hr class="soft-rule" style="margin:36px 0 22px">
+          <p>延伸閱讀：<a href="zero-click-ctr-and-lead-attribution.html">網站曝光下滑、CTR 不到 1%？面對 AI 摘要零點擊的止跌與免 GA4 表單來源追蹤 →</a></p>
+          <a class="tiny-link" href="index.html">返回技術文章列表</a>
+        </article>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div>
+        <a class="logo" href="../index.html"><strong>nio<span>.</span>chen</strong><small>LAB &amp; NOTES</small></a>
+        <p>© 2026 Nio Chen · Built with static HTML &amp; Cloudflare Pages</p>
+      </div>
+      <div class="footer-links">
+        <a href="../projects/index.html">作品與實驗室</a>
+        <a href="../journal/index.html">技術文章</a>
+        <a href="../about.html">關於</a>
+        <a href="https://github.com/minxinchen" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+      </div>
+    </div>
+  </footer>
+  <script defer src="../assets/site.js"></script>
+</body>
+</html>

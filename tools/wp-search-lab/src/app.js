@@ -1,5 +1,5 @@
 import { Readability } from '@mozilla/readability';
-import { RULE_VERSION, RULES, LIMITS, STATUS_LABELS, CATEGORY_LABELS, escapeHtml, normalizeUrl, createSnapshot, auditPages, analyzeSite, initialPlan, compilePrompt, compileSinglePrompt, compareAudits, reportHtml } from './core.js';
+import { RULE_VERSION, RULES, LIMITS, STATUS_LABELS, CATEGORY_LABELS, escapeHtml, normalizeUrl, createSnapshot, auditPages, analyzeSite, initialPlan, compilePrompt, compileSinglePrompt, compareAudits, reportHtml, triageGscUrls } from './core.js';
 import sampleBefore from '../tests/fixtures/product-before.html';
 import sampleAfter from '../tests/fixtures/product-after.html';
 import parse5License from '../licenses/parse5.txt';
@@ -10,7 +10,7 @@ import readabilityLicense from '../licenses/readability.txt';
 const e = escapeHtml;
 const main = document.querySelector('#main');
 const STORAGE_KEY = 'wp-search-lab:session:v1';
-const emptyState = () => ({ view: 'start', target: 'before', previewTab: 'serp', previewIndex: 0, pagespeed: {}, drafts: { before: [], after: [] }, before: [], after: [], plan: [], history: [], filter: 'issues', tool: 'ChatGPT', scope: '只產出修改建議與草稿；未經我確認，不發佈正式網站。', notes: '', busy: false });
+const emptyState = () => ({ view: 'start', target: 'before', previewTab: 'serp', previewIndex: 0, pagespeed: {}, drafts: { before: [], after: [] }, before: [], after: [], plan: [], history: [], filter: 'issues', tool: 'ChatGPT', scope: '只產出修改建議與草稿；未經我確認，不發佈正式網站。', notes: '', gscInput: '', gscResult: null, busy: false });
 let state = emptyState();
 const sampleUrl = 'https://example.test/products/p-100';
 const label = status => `<span class="status ${status}">${e(STATUS_LABELS[status] || status)}</span>`;
@@ -87,7 +87,7 @@ function go(view) {
 function render() {
   document.querySelectorAll('[data-nav].nav-item').forEach(b => { const active = b.dataset.nav === state.view; b.classList.toggle('active', active); if (active) b.setAttribute('aria-current', 'step'); else b.removeAttribute('aria-current'); });
   document.querySelector('#session-label').textContent = state.before.length ? `${state.before.length} 頁 · ${state.before[0].page.sourceKind}${state.before.length === 1 ? ' · ' + state.before[0].page.url : ''}` : '尚未載入網站';
-  const views = { start: renderStart, results: renderResults, plan: renderPlan, prompt: renderPrompt, verify: renderVerify, help: renderHelp };
+  const views = { start: renderStart, results: renderResults, plan: renderPlan, prompt: renderPrompt, verify: renderVerify, gsc: renderGscTriage, faq: renderFaq, help: renderHelp };
   main.innerHTML = (views[state.view] || renderStart)();
 }
 
@@ -102,8 +102,8 @@ function importPanel(target) {
 }
 
 function renderStart() {
-  return intro('01 / 開始檢測', '輸入網址，馬上知道網頁該從哪裡改。', '依 Google 搜尋指南、Lighthouse SEO、AI 摘要（AIO）與可閱讀性檢查 WordPress 頁面，直接告訴你在後台哪裡下手。') +
-  `<div class="steps"><div class="step"><span class="step-num">STEP 1</span><b>貼上網址</b><small>不用登入後台或寫程式</small></div><div class="step"><span class="step-num">STEP 2</span><b>先改最重要的 3 件事</b><small>看 Google／LINE 預覽與白話步驟</small></div><div class="step"><span class="step-num">STEP 3</span><b>改完再測一次</b><small>確認修正前後的實際變化</small></div></div><div class="two-col"><div>${importPanel('before')}</div><div><section class="panel sample-panel"><span class="sample-tag">免網址試玩 · 示範資料</span><h2>還沒準備網址？先看示範。</h2><p>用一頁有常見問題的範例頁面，直接體驗「Google／LINE 預覽 → 優先修正清單 → 一鍵給 AI 改寫 → 前後比對」。</p><button id="sample-before" class="primary" ${state.before.length ? 'disabled' : ''}>載入示範頁面</button></section><section class="panel"><h2>會幫你檢查哪些重點？</h2><ul class="help-list"><li><b>Google 搜尋與爬蟲：</b>標題、簡介、robots.txt、X-Robots-Tag、以及有沒有誤裝兩套衝突的 SEO 外掛。</li><li><b>AI 摘要與結構：</b>主標題 H1、H2／H3 大綱層級、Schema 類型、作者與更新日期。</li><li><b>內外鏈與社群分享：</b>抓出「點這裡」空泛連結、無效假連結、以及 LINE／FB 分享卡片。</li><li><b>手機可閱讀性：</b>結合 Mozilla Readability 過濾雜訊，揪出超過 200 字的文字牆與缺 alt 圖片。</li></ul><button class="text-button" data-nav="help">查看完整說明與開源參考資料</button></section></div></div>`;
+  return intro('01 / 開始檢測', '輸入網址，馬上知道網頁該從哪裡改。', '不用懂程式或 SEO 術語。貼上 WordPress 網址，30 秒看懂 Google 預覽、最該先改的 3 件事，以及白話操作步驟。') +
+  `<div class="steps"><div class="step"><span class="step-num">STEP 1</span><b>貼上網址</b><small>不用登入後台或寫程式</small></div><div class="step"><span class="step-num">STEP 2</span><b>先改最重要的 3 件事</b><small>看 Google／LINE 預覽與白話步驟</small></div><div class="step"><span class="step-num">STEP 3</span><b>改完再測一次</b><small>確認修正前後的實際變化</small></div></div><div class="two-col"><div>${importPanel('before')}</div><div><section class="panel sample-panel"><span class="sample-tag">免網址試玩 · 示範資料</span><h2>還沒準備網址？先看示範。</h2><p>用一頁有常見問題的範例頁面，直接體驗「Google／LINE 預覽 → 優先修正清單 → 一鍵給 AI 改寫 → 前後比對」。</p><div class="actions" style="margin-top:12px"><button id="sample-before" class="primary" ${state.before.length ? 'disabled' : ''}>載入示範頁面</button><button class="quiet" data-nav="faq">完全不懂 SEO？看白話 FAQ</button></div></section><section class="panel"><h2>會幫你檢查哪些重點？</h2><ul class="help-list"><li><b>Google 搜尋與爬蟲：</b>標題、簡介、robots.txt、X-Robots-Tag、以及有沒有誤裝兩套衝突的 SEO 外掛。</li><li><b>AI 摘要與結構：</b>主標題 H1、H2／H3 大綱層級、Schema 類型、作者與更新日期。</li><li><b>內外鏈與社群分享：</b>抓出「點這裡」空泛連結、無效假連結、以及 LINE／FB 分享卡片。</li><li><b>手機可閱讀性：</b>過濾側邊欄雜訊，揪出超過 200 字的文字牆與缺說明圖片。</li></ul><div class="actions" style="margin-top:10px"><button class="text-button" data-nav="gsc">GSC 顯示上百頁未索引？用分流器 1 秒拆解 →</button></div></section></div></div>`;
 }
 
 function renderDimensionSummary(audits) {
@@ -230,6 +230,60 @@ function renderVerify() {
   (comparison.length ? `<section class="panel" id="comparison"><div class="filterbar"><h2>修改前 vs 修改後</h2><div class="actions"><button class="quiet" id="export-report">匯出報告</button><button class="quiet" id="export-data">下載原始 JSON</button></div></div><div class="compare-summary">${counts}</div><div class="table-wrap"><table class="comparison-table"><thead><tr><th>檢查項目</th><th>修改前</th><th>修改後</th><th>結果</th></tr></thead><tbody>${comparison.map(r => `<tr><td><b>${e(r.name)}</b>${state.before.length > 1 ? `<br><small>${e(r.pageUrl)}</small>` : ''}</td><td>${label(r.before?.status || 'UNKNOWN')}<details><summary>原本內容</summary><pre class="evidence">${e(r.before?.evidence.excerpt || '未提供')}</pre></details></td><td>${label(r.after?.status || 'UNKNOWN')}<details><summary>最新內容</summary><pre class="evidence">${e(r.after?.evidence.excerpt || '未提供')}</pre></details></td><td><b>${e(r.change)}</b><br><small>${e(r.reason)}</small></td></tr>`).join('')}</tbody></table></div></section>` : '') +
   importPanel('after') +
   `<section class="panel"><h2>驗證紀錄</h2>${state.history.length ? state.history.map(h => `<div class="history-item">${e(new Date(h.at).toLocaleString('zh-TW'))} · ${h.pages} 頁 · 已修正 ${h.fixed} · 回歸 ${h.regressed}</div>`).join('') : '<p class="panel-subtitle">尚未執行修改後檢測。</p>'}</section>`;
+}
+
+const GSC_SAMPLE_LIST = [
+  'https://example.test/blog/how-to-choose/feed/',
+  'https://example.test/comments/feed/',
+  'https://example.test/wp-content/themes/theme/style.min.css?ver=2.1',
+  'https://example.test/wp-json/',
+  'https://example.test/?s=search_term_string',
+  'https://example.test/blog/page/3/',
+  'http://example.test/',
+  'https://www.example.test/',
+  'https://example.test/index.php/contact/',
+  'https://example.test/zh-cn/pressure-fluctuation-guide/',
+].join('\n');
+
+function renderGscTriage() {
+  const res = state.gscResult;
+  const resultHtml = res
+    ? `<section class="panel"><h2>分類結果（共解析 ${res.total} 筆不重複網址）</h2><div class="dim-grid">${res.buckets.map(b => `<div class="dim-card ${b.count ? b.tone : 'good'}"><span class="dim-label">${e(b.title)}</span><strong>${b.count} 筆</strong><small>${e(b.action)}</small></div>`).join('')}</div>${res.buckets.filter(b => b.count > 0).map(b => `<details ${b.id === 'content' || b.id === 'legacy' ? 'open' : ''} style="margin-top:12px"><summary><b>${e(b.title)}（${b.count} 筆）</b> — ${e(b.action)}</summary><pre class="evidence">${e(b.urls.join('\n'))}</pre></details>`).join('')}</section>`
+    : '';
+  return intro('06 / 未索引分流', 'GSC 顯示上百頁「未建立索引」？1 秒拆出真正要修的頁面。', '把 Google Search Console 匯出的網址清單直接貼在下面（只在你的瀏覽器處理，不會上傳任何資料），馬上區分哪些是不用管的系統雜訊、哪些才是真正要搶救的文章。') +
+  `<section class="panel"><h2>貼上 GSC 未索引網址清單</h2><p class="panel-subtitle">直接從 GSC「索引 → 網頁」複製網址列貼上（一行一個網址，有雜字也沒關係，工具會自動抓網址）。</p><label class="field" for="gsc-urls">網址清單<textarea id="gsc-urls" rows="7" placeholder="https://你的網站.com/article/feed/\nhttps://你的網站.com/wp-content/themes/...\nhttps://你的網站.com/real-article/" spellcheck="false">${e(state.gscInput)}</textarea></label><div class="actions"><button id="run-gsc-triage" class="primary">幫我自動分類 →</button><button id="sample-gsc-triage" class="quiet">載入示範清單試玩</button></div></section>` +
+  resultHtml;
+}
+
+function renderFaq() {
+  const faqs = [
+    {
+      q: '1. 我是開店的業主／念美術系、餐飲系或高中生，完全不懂程式，也能用這個工具嗎？',
+      a: '完全可以！你只要會「複製網址 → 貼上 → 按按鈕」就好。這個工具本來就是為了沒有資訊背景的人設計的：它會把看不懂的網頁程式碼，翻成「就像整理店面招牌與菜單一樣」的白話步驟，告訴你進到 WordPress 後台要點哪裡、改哪一行。',
+    },
+    {
+      q: '2. 大家常說的 SEO 跟 AIO 到底是什麼？可以用生活例子講嗎？',
+      a: '把 Google 想像成一間超大的圖書館：\n• SEO（搜尋引擎優化）就像幫你的書寫好「清楚的書名、目錄、分類卡」，讓讀者走進圖書館時找得到你這本書。\n• AIO（AI 摘要優化）就像把書裡每一段重點條列清楚，當客人直接問「圖書館的 AI 店員」時，店員能直接看懂並引用你的內容回答客人。',
+    },
+    {
+      q: '3. 為什麼 Google Search Console 顯示一百多頁「未建立索引」？網站壞掉了嗎？',
+      a: '通常沒壞！就像一家餐廳不會把「廚房收據、舊店搬家公告、進貨單」擺到展示櫥窗一樣，WordPress 網站本來就會自動產生很多給系統看的網址（例如 /feed/ 通知檔、樣式檔、站內搜尋頁）。你可以直接點左側「06 未索引分流」貼上清單，1 秒就能看出真正該救的頁面有幾頁。',
+    },
+    {
+      q: '4. 把網址貼進來檢查，會不會改壞我的網站，或外洩後台資料？',
+      a: '完全不會。這個工具不需要你的帳號密碼，也不會連進你的 WordPress 後台；它就像一般路人打開網頁一樣只看公開畫面，而且資料分析全部在你的瀏覽器裡完成。真正要修改時，還是由你自己決定要不要進後台改。',
+    },
+    {
+      q: '5. 照著清單全部修完之後，明天就會衝到 Google 第一頁嗎？',
+      a: '不會馬上第一頁，老實說任何保證「明天就第一名」的說法都要小心。修好標題、段落、連結與速度，就像把店面打掃乾淨、招牌點亮，讓 Google 與客人願意進來；但 Google 需要幾天到幾週重新造訪，通常建議觀察完整 28 天再看數據變化。',
+    },
+    {
+      q: '6. 我沒有裝 GA4，要怎麼知道客人是從哪篇文章進來填聯絡表單的？',
+      a: '不用一開始就學複雜的 GA4！如果你的網站每月訪客還不多，只要在聯絡表單（例如 Fluent Forms）加 3 個客人看不到的「隱藏欄位」（進站第一頁、來源網址、送單頁），搭配短短 15 行瀏覽器紀錄腳本，客人送出詢價時，後台就會自動幫你記下「他是看完哪篇文章來問的」。',
+    },
+  ];
+  return intro('新手 FAQ', '完全沒學過網站或 SEO？花 2 分鐘看懂全部重點。', '用白話與生活比喻回答業主、行銷新手與非資訊科系學生最常問的 6 個問題，不塞生硬術語。') +
+  `<section class="panel">${faqs.map((item, i) => `<details ${i < 2 ? 'open' : ''} style="margin-bottom:14px"><summary><b>${e(item.q)}</b></summary><p style="white-space:pre-line;margin:10px 0 4px">${e(item.a)}</p></details>`).join('')}<div class="actions" style="margin-top:18px"><button class="primary" data-nav="start">懂了，開始檢查我的網址 →</button><button class="quiet" data-nav="gsc">去試試 GSC 未索引分流器</button></div></section>`;
 }
 
 function renderHelp() {
@@ -407,6 +461,17 @@ document.addEventListener('click', async event => {
     if (button.id === 'export-prompt') { download(currentPrompt(), 'wp-search-lab-prompt.txt', 'text/plain;charset=utf-8'); return; }
     if (button.id === 'export-report') { download(reportHtml(reportData()), 'wp-search-lab-report.html', 'text/html;charset=utf-8'); notify('檢測報告已下載。'); return; }
     if (button.id === 'export-data') { download(JSON.stringify(reportData(), null, 2), 'wp-search-lab-evidence.json', 'application/json'); notify('原始檢測資料已下載。'); return; }
+    if (button.id === 'sample-gsc-triage') { state.gscInput = GSC_SAMPLE_LIST; state.gscResult = triageGscUrls(state.gscInput); render(); notify('已載入示範清單並完成分類！'); return; }
+    if (button.id === 'run-gsc-triage') {
+      const box = document.querySelector('#gsc-urls');
+      state.gscInput = box ? box.value : state.gscInput;
+      const res = triageGscUrls(state.gscInput);
+      if (!res.total) throw new Error('請貼上至少一個包含 http:// 或 https:// 的網址。');
+      state.gscResult = res;
+      render();
+      notify(`已完成分類：共 ${res.total} 筆不重複網址。`);
+      return;
+    }
   } catch (error) { notify(error.message || '操作未完成，請檢查輸入後重試。', true); }
   finally { setBusy(false); }
 });
@@ -436,6 +501,7 @@ document.addEventListener('input', event => {
   if (input.dataset.taskNote !== undefined) { state.plan[Number(input.dataset.taskNote)].note = input.value; saveSession(); }
   if (input.id === 'scope') { state.scope = input.value; saveSession(); syncPrompt(); }
   if (input.id === 'prompt-notes') { state.notes = input.value; saveSession(); syncPrompt(); }
+  if (input.id === 'gsc-urls') { state.gscInput = input.value; }
 });
 try {
   const saved = localStorage.getItem(STORAGE_KEY);

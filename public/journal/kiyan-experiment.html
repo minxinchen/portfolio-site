@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <script>try{const s=localStorage.getItem("color-scheme");if(s==="light"||s==="dark")document.querySelector('meta[name="color-scheme"]').content=s;}catch{}</script>
-  <meta name="description" content="KIYAN 比例閥網站行動版首頁 Mobile LCP 從 13.10s 壓到 2.72s 的隔離測試紀錄，與 B2B 技術內容查核筆記。">
-  <title>只動首屏就把 Mobile LCP 從 13.1s 壓到 2.7s：KIYAN 隔離測試筆記 · Nio Chen</title>
+  <meta name="description" content="B2B 工業多語系統行動版首頁 Mobile LCP 從 13.10s 壓到 2.72s 的隔離測試紀錄，與技術內容查核筆記。">
+  <title>只動首屏就把 Mobile LCP 從 13.1s 壓到 2.7s：多語系統隔離測試筆記 · Nio Chen</title>
   <link rel="canonical" href="https://portfolio-site-1b8.pages.dev/journal/kiyan-experiment.html">
   <link rel="stylesheet" href="../assets/style.css">
 </head>
@@ -37,8 +37,8 @@
         <header class="article-head">
           <a class="back-link" href="index.html">← 返回技術文章</a>
           <p class="smallcaps" style="margin:22px 0 0">驗證與實測 // B2B SEO &amp; PERFORMANCE</p>
-          <h1>只動首屏就把 Mobile LCP 從 13.1s 壓到 2.7s：KIYAN 隔離測試筆記</h1>
-          <p class="lead">處理 KIYAN 比例閥三語網站時，手機首頁載入卡在 13.10 秒。沒有先換主機或裝一堆外掛，先只替換首屏做隔離測試，數字直接掉到 3.16 秒。</p>
+          <h1>只動首屏就把 Mobile LCP 從 13.1s 壓到 2.7s：多語系統隔離測試筆記</h1>
+          <p class="lead">處理一套 B2B 工業設備多語系統時，手機首頁載入卡在 13.10 秒。沒有先換主機或裝一堆外掛，先只替換首屏做隔離測試，數字直接掉到 3.16 秒。</p>
           <div class="article-info">
             <span>Nio Chen</span>
             <span>2026-05</span>
@@ -48,7 +48,7 @@
 
         <article class="article-prose">
           <div class="case-graphic">
-            <div style="font-family:var(--mono);font-size:11.5px;color:var(--accent-dark);margin-bottom:10px">KIYAN // MOBILE LCP ISOLATION RECORD</div>
+            <div style="font-family:var(--mono);font-size:11.5px;color:var(--accent-dark);margin-bottom:10px">B2B MULTILINGUAL CASE // MOBILE LCP ISOLATION RECORD</div>
             <div style="display:flex;justify-content:space-between;gap:8px;align-items:baseline;font-family:var(--mono);font-weight:700;font-size:clamp(18px,3vw,28px)">
               <span>13.10s</span><span>→</span><span>3.16s</span><span>→</span><span>2.72s</span>
             </div>
@@ -60,18 +60,18 @@
           <p>一開始列出的嫌疑清單有主機回應、首頁 Slider、圖片體積、JavaScript 與快取。如果一次全改，成本高又找不到真正的元兇。我先開一個只動首屏的對照測試，確認光是拿掉沉重的首屏載入就把 LCP 壓掉將近 10 秒，才正式動網站上線，最終落點約 2.72 秒。</p>
 
           <h2>順手整理的三個 B2B 內容查核坑</h2>
-          <p>做三語規格表、產品頁與競品比較時，AI 幫忙產稿速度很快，但也最容易在三個地方露餡：</p>
+          <p>整理多語系統規格表、產品頁與競品比較時，AI 幫忙產稿速度很快，但也最容易在三個地方露餡：</p>
           <ul>
             <li><strong>只讀官網規格會失真：</strong>官網型錄每家都寫得完美，把官方文件跟論壇、經銷商、二手機市場的實際停機與服務回饋放在一起對照，才看得出承諾跟現場的落差。</li>
             <li><strong>存在不等於會用：</strong>看過最離譜的自動推論是「客戶廠房裡已經有某牌控制器，所以操作員不用重新學習」。就像電腦裝了 Python 不代表人是工程師，跨層跳躍只要出現一次，內行人就不會信整頁內容。</li>
             <li><strong>還沒自動化的步驟要直接講清楚：</strong>哪一段已上線、哪一段目前仍是人工串接，直接寫在流程裡比硬包成漂亮術語更耐得住追問。</li>
           </ul>
 
-          <p>這套從真實網站踩出來的查核習慣，後來也直接帶進了 <a href="../tools/wp-search-lab/">WP Search Lab</a>。</p>
+          <p>這套從真實多語系統踩出來的查核習慣，後來也直接帶進了 <a href="../tools/wp-search-lab/">WP Search Lab</a>，以及後續的 <a href="gsc-not-indexed-triage.html">GSC 未索引拆解指南</a>。</p>
 
           <details>
             <summary>展開：量測數據範圍說明</summary>
-            <p>Mobile LCP 數字（13.10s → 3.16s → 2.72s）來自既有 <a href="../projects/kiyan.html">KIYAN 案例量測紀錄</a>，不代表目前即時 Lighthouse 數值；頁面速度改善屬於技術指標，不能直接推論成搜尋排名或詢價成長的單一因果。</p>
+            <p>Mobile LCP 數字（13.10s → 3.16s → 2.72s）來自既有去識別化 <a href="../projects/kiyan.html">B2B 工業多語系統案例紀錄</a>，不代表目前即時 Lighthouse 數值；頁面速度改善屬於技術指標，不能直接推論成搜尋排名或詢價成長的單一因果。</p>
           </details>
 
           <hr class="soft-rule" style="margin:36px 0 22px">

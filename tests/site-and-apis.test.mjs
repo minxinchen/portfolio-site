@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { auditPage, analyzeSite } from '../tools/wp-search-lab/src/core.js';
+import { auditPage, analyzeSite, triageGscUrls } from '../tools/wp-search-lab/src/core.js';
 import { discoverSitemapUrls } from '../functions/api/discover-sitemap.js';
 import { fetchPageSpeed } from '../functions/api/pagespeed.js';
 import { checkRateLimit, resetRateLimits, validateSameOriginPost } from '../functions/_lib/net.js';
@@ -77,4 +77,28 @@ test('rate limiter and Sec-Fetch-Site guard block abuse', () => {
   const blocked = checkRateLimit(makeReq('2.2.2.2'), { key: 't', max: 2, windowMs: 60000, now: 3000 });
   assert.equal(blocked.ok, false);
   assert.ok(blocked.retryAfterSec >= 57);
+});
+
+test('triageGscUrls classifies WordPress feeds, assets, search/pagination, legacy redirects, and real content cleanly', () => {
+  const raw = [
+    'URL\tLast crawled',
+    'https://demo.example/post-a/feed/',
+    'https://demo.example/post-a/feed/',
+    'https://demo.example/wp-content/themes/x/style.css?ver=1',
+    'https://demo.example/wp-json/',
+    'https://demo.example/?s=query',
+    'https://demo.example/blog/page/2/',
+    'http://demo.example/',
+    'https://www.demo.example/',
+    'https://demo.example/index.php/contact/',
+    'https://demo.example/real-article-guide/',
+  ].join('\n');
+  const res = triageGscUrls(raw);
+  assert.equal(res.total, 9);
+  const byId = Object.fromEntries(res.buckets.map(b => [b.id, b.count]));
+  assert.equal(byId.feed, 1);
+  assert.equal(byId.asset, 2);
+  assert.equal(byId.search, 2);
+  assert.equal(byId.legacy, 3);
+  assert.equal(byId.content, 1);
 });

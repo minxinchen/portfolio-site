@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <script>try{const s=localStorage.getItem("color-scheme");if(s==="light"||s==="dark")document.querySelector('meta[name="color-scheme"]').content=s;}catch{}</script>
+  <meta name="description" content="網站有排名有曝光，CTR 卻不到 1%？解析 AI 摘要時代的零點擊現象，分享標題選型化、知識文導流產品頁，以及不裝 GA4 也能追蹤表單來源的輕量解法。">
+  <title>網站曝光下滑、CTR 不到 1%？面對 AI 摘要零點擊的止跌與免 GA4 表單來源追蹤 · Nio Chen</title>
+  <link rel="canonical" href="https://portfolio-site-1b8.pages.dev/journal/zero-click-ctr-and-lead-attribution.html">
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"平均排名變好，為什麼點擊反而變少？","acceptedAnswer":{"@type":"Answer","text":"當大量排在後段的長尾曝光流失時，剩下的少數高排名詞會把全站平均排名拉高，這是一種組成偏差，不代表整體進步；同時，純定義型的查詢也常被 Google AI 摘要直接回答，造成曝光還在但 CTR 掉到 1% 以下。"}},{"@type":"Question","name":"沒有安裝 GA4 或 GTM，也能知道客戶是從哪篇文章進來填表單的嗎？","acceptedAnswer":{"@type":"Answer","text":"可以。在 WordPress 表單外掛加上三個隱藏欄位（首次著陸頁、來源網址、送單頁），搭配約 15 行前端 sessionStorage 腳本，送出表單時就會把來源一起寫進後台名單，完全不需要額外開通外部帳號。"}},{"@type":"Question","name":"B2B 網站把流量拉高就一定會有詢價嗎？","acceptedAnswer":{"@type":"Answer","text":"不一定。如果全站點擊都停在純科普文章、沒有清楚的產品選型橋接與低摩擦聯絡表單，流量再多也很難轉成商機。"}}]}</script>
+  <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container head-inner">
+      <a class="logo" href="../index.html" aria-label="Nio 首頁"><strong>nio<span>.</span>chen</strong><small>LAB &amp; NOTES</small></a>
+      <nav class="site-nav" id="main-nav" aria-label="主選單">
+        <a href="../index.html">首頁</a>
+        <a href="../projects/index.html">作品與實驗室</a>
+        <a href="../journal/index.html" aria-current="page">技術文章</a>
+        <a href="../about.html">關於</a>
+        <a class="nav-contact" href="../about.html#contact">聯絡 ↗</a>
+      </nav>
+      <div class="head-tools">
+        <button class="theme-toggle" type="button" data-theme-toggle aria-label="切換深色或淺色模式">
+          <span class="mode-dark"><span aria-hidden="true">☾</span><span>深色</span></span>
+          <span class="mode-light"><span aria-hidden="true">☀</span><span>淺色</span></span>
+        </button>
+        <button class="menu-toggle" type="button" data-menu aria-expanded="false" aria-controls="main-nav">選單</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <div class="reading">
+        <header class="article-head">
+          <a class="back-link" href="index.html">← 返回技術文章</a>
+          <p class="smallcaps" style="margin:22px 0 0">驗證與實測 // AIO &amp; B2B CRO</p>
+          <h1>網站曝光下滑、CTR 不到 1%？面對 AI 摘要零點擊的止跌與免 GA4 表單來源追蹤</h1>
+          <p class="lead"><strong>先講結論：</strong>如果你的文章明明排在 Google 第 4–8 名，點擊率（CTR）卻只有 0.3%–0.8%，通常不是網站壞了，而是「純百科定義」已被搜尋頁上的 AI 摘要直接講完。止跌與拉高轉換的關鍵有三步：<strong>先把主力轉換語系的標題改為實務選型切角、在文章中段植入產品橋接卡片，並用表單隱藏欄位直接記錄詢價來源</strong>。</p>
+          <div class="article-info">
+            <span>Nio Chen</span>
+            <span>2026-11</span>
+            <span>搭配工具：<a href="../tools/wp-search-lab/" style="color:var(--accent)">WP Search Lab 網站體檢台 ↗</a></span>
+          </div>
+        </header>
+
+        <article class="article-prose">
+          <div class="case-graphic">
+            <div style="font-family:var(--mono);font-size:11.5px;color:var(--accent-dark);margin-bottom:8px">QUICK TOC // 本文目錄</div>
+            <ul style="margin:0;padding-left:18px;font-size:14.5px">
+              <li><a href="#trap">1. 為什麼「平均排名變好」反而可能是警訊？</a></li>
+              <li><a href="#fixes">2. 面對零點擊的 3 個高優先止跌動作</a></li>
+              <li><a href="#zero-ga4">3. 業主沒用 GA4 怎麼辦？15 行前端腳本做表單歸因</a></li>
+              <li><a href="#boundary">4. 量測紀律：交付完成不等於成效已證實</a></li>
+              <li><a href="#faq">5. 常見問題（FAQ）</a></li>
+            </ul>
+          </div>
+
+          <h2 id="trap">1. 為什麼「平均排名變好」反而可能是警訊？</h2>
+          <p>在檢視一套 B2B 工業多語系統的 28 日 GSC 數據時，我們看過一個很經典的陷阱：全站曝光下跌 38%、點擊下跌 29%，但「平均排名」卻從 9.6 進步到 8.6。</p>
+          <p>這不是變好了，而是<strong>大量排在後段的長尾曝光流失</strong>，剩下少數排在前段的詞把平均值拉高。同時，我們發現前 10 大流量頁全都是科普定義文章（0 個產品頁進榜），單篇曝光破千、CTR 卻只有 <code>0.2%–0.8%</code>——訪客看完搜尋頁上的定義摘要就走了，根本沒點進網站。</p>
+
+          <h2 id="fixes">2. 面對零點擊的 3 個高優先止跌動作</h2>
+          <table>
+            <thead>
+              <tr><th>常見卡點</th><th>背後原因</th><th>具體改法</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>曝光高、CTR &lt; 1%</strong></td><td>標題寫成「XX 是什麼？」，答案在搜尋結果就被講完</td><td>改寫為「<strong>公式／定義＋實務選型與避坑</strong>」，給搜尋者一個點進來比較條件的理由</td></tr>
+              <tr><td><strong>改錯優先語系</strong></td><td>先花力氣改 0 詢價的語系，忽略實際帶來名單的主力語系</td><td>先核對表單實際名單分布，優先修補<strong>主力轉換語系</strong>的高曝光文章與過時規格</td></tr>
+              <tr><td><strong>後台改了前台沒變</strong></td><td>早期外掛或自訂程式碼片段（Code Snippets）在背景強制覆寫標題與內文</td><td>盤點並停用過時覆寫片段，讓標題、摘要與正文回歸單一管理來源</td></tr>
+            </tbody>
+          </table>
+
+          <p>另外在內容結構上，別只在文末放冷冰冰的「聯絡我們」。我們在主力文章的<strong>中段（約 40% 處）與文末</strong>加上情境式選型卡片，直接對應到產品頁與規格比較，讓看完原理的讀者能順手進入下一步。</p>
+
+          <h2 id="zero-ga4">3. 業主沒用 GA4 怎麼辦？15 行前端腳本做表單歸因</h2>
+          <p>很多中小企業或 B2B 工廠本來就沒有 GA4 或 GTM；在月點擊數百次、月詢價個位數的階段，強行替客戶代管外部容器，後續還有帳號移交與維運成本。</p>
+          <p>一個更輕量、零移交成本的做法是直接留在 WordPress 表單裡完成歸因：</p>
+          <ol>
+            <li>在聯絡表單新增 3 個隱藏欄位：<code>landing_page</code>（首次進站頁）、<code>initial_referrer</code>（來源網址）、<code>submit_page</code>（送單頁）。</li>
+            <li>放一段約 15 行的純前端腳本，在訪客第一次進站時把著陸頁與來源存進瀏覽器 <code>sessionStorage</code>（同次造訪不覆寫）。</li>
+            <li>當訪客逛完文章去聯絡頁送出表單時，自動把這 3 個值填進隱藏欄位。</li>
+          </ol>
+          <p>如此一來，業主在 WordPress 後台收到的每一筆真實詢價，都會直接標明「客人是從哪篇文章進站」。不需要額外外掛、不拖慢速度，也沒有任何帳號移交負擔。</p>
+
+          <h2 id="boundary">4. 量測紀律：交付完成不等於成效已證實</h2>
+          <p>所有修改上線後，我們只會把匿名 HTTP 200、舊連結歸零、手機版不溢出與隱藏欄位 DOM 驗證標記為<strong>網站交付通過</strong>。搜尋點擊是否回升、表單是否增加，必須等固定 28 日觀察窗資料完整後才能判讀，不會把上線當天的檢核直接包裝成 SEO 成效。</p>
+
+          <h2 id="faq">5. 常見問題（FAQ）</h2>
+          <details open>
+            <summary>一定要裝 GA4 才能做 SEO 嗎？</summary>
+            <p>不一定。如果有 Google Search Console 看搜尋曝光與點擊，再搭配表單隱藏欄位紀錄真實詢價來源，對中小型 B2B 網站就已經足夠做決策；等流量放大、需要分析跨頁行為漏斗時再導入 GA4 也不遲。</p>
+          </details>
+          <details>
+            <summary>英文聯絡表單常被忽略的小細節有哪些？</summary>
+            <p>最常見的是表單標題殘留中文、欄位大小寫不統一，以及把「性別」「地址」設成必填增加填單阻力。清掉殘留中文並把非必要欄位改為選填，是成本最低的轉換改善之一。</p>
+          </details>
+
+          <hr class="soft-rule" style="margin:36px 0 22px">
+          <p>想先檢查自己的網頁有沒有標題過長、段落文字牆或外掛衝突？直接試用：<a href="../tools/wp-search-lab/">WP Search Lab 線上體檢台 ↗</a></p>
+          <a class="tiny-link" href="index.html">返回技術文章列表</a>
+        </article>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div>
+        <a class="logo" href="../index.html"><strong>nio<span>.</span>chen</strong><small>LAB &amp; NOTES</small></a>
+        <p>© 2026 Nio Chen · Built with static HTML &amp; Cloudflare Pages</p>
+      </div>
+      <div class="footer-links">
+        <a href="../projects/index.html">作品與實驗室</a>
+        <a href="../journal/index.html">技術文章</a>
+        <a href="../about.html">關於</a>
+        <a href="https://github.com/minxinchen" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+      </div>
+    </div>
+  </footer>
+  <script defer src="../assets/site.js"></script>
+</body>
+</html>

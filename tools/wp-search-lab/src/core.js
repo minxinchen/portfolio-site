@@ -875,3 +875,45 @@ export function reportHtml({ before = [], after = [], history = [], plan = [] })
   const comparison = after.length ? `<h2>前後比較</h2><table><tr><th>頁面</th><th>檢查</th><th>之前</th><th>之後</th><th>結果</th></tr>${compareAudits(before, after, history[1]?.audits || []).map(r => `<tr><td>${e(r.pageUrl)}</td><td>${e(r.name)}</td><td>${e(r.before?.status || '無資料')}</td><td>${e(r.after?.status || '無資料')}</td><td>${e(r.change)} ${e(r.reason)}</td></tr>`).join('')}</table>` : '';
   return `<!doctype html><html lang="zh-Hant"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'"><title>WP Search Lab 檢測報告</title><style>body{font:16px/1.7 system-ui,sans-serif;color:#302b28;max-width:960px;margin:40px auto;padding:0 24px;background:#fcfaf6}h1{font-size:28px}h2{margin-top:36px}article{background:#fff;border:1px solid #e7ddd3;padding:20px;margin:16px 0;border-radius:14px}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f4eee7;padding:12px;border-radius:8px}table{border-collapse:collapse;width:100%;background:#fff}td,th{border:1px solid #e7ddd3;padding:8px;overflow-wrap:anywhere}p{overflow-wrap:anywhere}@media print{article{break-inside:avoid}}</style><h1>WP Search Lab 檢測報告</h1><p>匯出 ${e(new Date().toISOString())}。僅根據靜態 HTML 結構分析；修改前建議先保留原值或使用 WordPress 修訂版本。</p><h2>改善計畫</h2><ol>${plan.map(t => `<li>${e(t.finding?.name || t.findingKey)}：${t.included ? '本次處理' : '暫緩'}。${e(t.note)}</li>`).join('')}</ol>${comparison}${auditSection('改善前檢測', before)}${auditSection('改善後檢測', after)}<h2>重新驗證紀錄</h2><ul>${history.map(h => `<li>${e(h.at)} · ${h.pages} 頁 · 已修正 ${h.fixed} · 回歸 ${h.regressed} · 待確認 ${h.unknown}</li>`).join('')}</ul><p>WP Search Lab · 規則 ${RULE_VERSION} · 採用開源元件：parse5 (MIT)、entities (BSD-2-Clause)、robots-parser (MIT)、@mozilla/readability (Apache-2.0)。</p></html>`;
 }
+
+export const GSC_TRIAGE_BUCKETS = [
+  { id: 'content', title: '真正該被找到的文章／產品頁', tone: 'bad', action: '優先檢查這幾頁！確認字數不要太少、標題清楚，而且從首頁或其他文章點得到它。' },
+  { id: 'legacy', title: '舊網址或重複網址（轉址類）', tone: 'warn', action: '網站改過網址很正常；請回文章與選單檢查，把還指向這些舊網址的按鈕改成最新網址。' },
+  { id: 'feed', title: 'WordPress 自動通知檔（/feed/）', tone: 'good', action: '不用管它！這就像報紙的自動推播檔，本來就不是給人在 Google 搜尋看的網頁。' },
+  { id: 'asset', title: '網頁零件檔（樣式表／程式／檔案）', tone: 'good', action: '不用管它！CSS、JS、wp-json 或目錄屬於網站內部零件，搜尋引擎本來就不需收錄。' },
+  { id: 'search', title: '站內搜尋頁或分頁（?s= / page）', tone: 'good', action: '維持隱藏（noindex）即可，避免站內搜尋結果頁跟你的正式文章互相搶排名。' },
+];
+
+export function triageGscUrls(rawText) {
+  const lines = String(rawText || '').split(/\r?\n/);
+  const seen = new Set();
+  const grouped = Object.fromEntries(GSC_TRIAGE_BUCKETS.map(b => [b.id, []]));
+  for (const line of lines) {
+    const match = line.match(/https?:\/\/[^\s,\t"'<>]+/i);
+    if (!match) continue;
+    const raw = match[0].trim();
+    if (seen.has(raw)) continue;
+    seen.add(raw);
+    const lower = raw.toLowerCase();
+    let pathname = lower;
+    let query = '';
+    try {
+      const u = new URL(raw);
+      pathname = u.pathname.toLowerCase();
+      query = u.search.toLowerCase();
+    } catch {}
+    if (/\/feed(\/|$)|\/comments\/feed/i.test(pathname)) {
+      grouped.feed.push(raw);
+    } else if (/^\/wp-(?:content|includes|json|admin)\b|\.(?:css|js|png|jpe?g|webp|gif|svg|ico|pdf|woff2?|ttf|map)(?:$|\?)/i.test(pathname)) {
+      grouped.asset.push(raw);
+    } else if (/[?&]s=|\/search\/|\/page\/\d+\/?$/i.test(pathname + query)) {
+      grouped.search.push(raw);
+    } else if (/^http:\/\//i.test(raw) || /\/\/www\./i.test(raw) || /\*/.test(raw) || /\/index\.php\//i.test(pathname)) {
+      grouped.legacy.push(raw);
+    } else {
+      grouped.content.push(raw);
+    }
+  }
+  const buckets = GSC_TRIAGE_BUCKETS.map(b => ({ ...b, urls: grouped[b.id], count: grouped[b.id].length }));
+  return { total: seen.size, buckets };
+}
