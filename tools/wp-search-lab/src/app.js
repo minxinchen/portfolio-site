@@ -93,7 +93,7 @@ function render() {
 
 function importPanel(target) {
   const drafts = state.drafts[target], after = target === 'after';
-  return `<section class="panel" id="import-panel"><h2>${after ? '重新檢查線上的同一個頁面' : '貼上網址，馬上檢查'}</h2><p class="panel-subtitle">不需登入 WordPress、不用懂程式碼。抓回網頁與 robots.txt 後會告訴你最該先改的 3 件事。</p>
+  return `<section class="panel" id="import-panel"><h2>${after ? '重新檢查線上的同一個頁面' : '貼上網址，馬上檢查'}</h2><p class="panel-subtitle">不需登入 WordPress，也不用看原始碼。讀取公開網頁與 robots.txt 後，整理出最優先的 3 個改善項目。</p>
   <div class="url-check"><label class="field" for="fetch-url">要檢查的網頁網址<input id="fetch-url" type="url" placeholder="https://你的網站.com/文章或頁面/" value="${after && state.before[0] ? e(state.before[0].page.url) : ''}" autocomplete="url"></label><div class="check-row"><label><input id="fetch-product" type="checkbox" ${after && state.before[0]?.page.context.product ? 'checked' : ''}>這是產品／商品頁（加測規格表與詢價入口）</label><label><input id="fetch-multilingual" type="checkbox" ${after && state.before[0]?.page.context.multilingual ? 'checked' : ''}>多語系頁面</label></div><div class="url-buttons"><button id="fetch-page" data-target="${target}" class="primary" ${!after && state.before.length ? 'disabled' : ''}>${after ? '重新讀取並比較' : '開始檢查這個網頁 →'}</button>${!after ? `<button id="fetch-sitemap" data-target="${target}" class="quiet" ${state.before.length ? 'disabled' : ''}>從 Sitemap 抽樣體檢全站（最多 10 頁）</button>` : ''}</div><p class="fetch-note">僅讀取公開網頁、robots.txt 與 Sitemap，不需帳號密碼、不會修改你的網站。單頁或全站抽樣皆可自動檢查。</p></div>
   <details class="advanced-import"><summary>其他方式：上傳 HTML、貼原始碼、或匯入上次進度檔（JSON）</summary><div class="upload-zone"><p>離線使用或一次檢查多頁（最多 20 頁、每頁 2 MB）。</p><label class="field" for="files">選取網頁檔案（.html / .htm）<input id="files" type="file" accept=".html,.htm,text/html" multiple data-target="${target}"></label>${!after ? '<hr class="divider"><label class="field" for="session-file">跨裝置恢復：匯入先前的進度檔（wp-search-lab-evidence.json）<input id="session-file" type="file" accept=".json,application/json"></label>' : ''}<hr class="divider"><label class="field" for="page-url">或直接貼上原始碼（請先填入該頁網址）<input id="page-url" type="url" placeholder="https://your-site.com/page/" autocomplete="off"></label><label class="field" for="source-html">HTML 原始碼<textarea id="source-html" rows="5" placeholder="貼上網頁原始碼（其中的 Script 不會執行）。" spellcheck="false"></textarea></label><button id="add-source" data-target="${target}" class="quiet">加入待檢測清單</button></div></details>
   ${after ? '<div class="soft">請使用與改善前相同的網址與頁面類型，才能準確比對前後差異。</div>' : ''}
@@ -102,8 +102,8 @@ function importPanel(target) {
 }
 
 function renderStart() {
-  return intro('01 / 開始檢測', '輸入網址，馬上知道網頁該從哪裡改。', '不用懂程式或 SEO 術語。貼上 WordPress 網址，30 秒看懂 Google 預覽、最該先改的 3 件事，以及白話操作步驟。') +
-  `<div class="steps"><div class="step"><span class="step-num">STEP 1</span><b>貼上網址</b><small>不用登入後台或寫程式</small></div><div class="step"><span class="step-num">STEP 2</span><b>先改最重要的 3 件事</b><small>看 Google／LINE 預覽與白話步驟</small></div><div class="step"><span class="step-num">STEP 3</span><b>改完再測一次</b><small>確認修正前後的實際變化</small></div></div><div class="two-col"><div>${importPanel('before')}</div><div><section class="panel sample-panel"><span class="sample-tag">免網址試玩 · 示範資料</span><h2>還沒準備網址？先看示範。</h2><p>用一頁有常見問題的範例頁面，直接體驗「Google／LINE 預覽 → 優先修正清單 → 一鍵給 AI 改寫 → 前後比對」。</p><div class="actions" style="margin-top:12px"><button id="sample-before" class="primary" ${state.before.length ? 'disabled' : ''}>載入示範頁面</button><button class="quiet" data-nav="faq">完全不懂 SEO？看白話 FAQ</button></div></section><section class="panel"><h2>會幫你檢查哪些重點？</h2><ul class="help-list"><li><b>Google 搜尋與爬蟲：</b>標題、簡介、robots.txt、X-Robots-Tag、以及有沒有誤裝兩套衝突的 SEO 外掛。</li><li><b>AI 摘要與結構：</b>主標題 H1、H2／H3 大綱層級、Schema 類型、作者與更新日期。</li><li><b>內外鏈與社群分享：</b>抓出「點這裡」空泛連結、無效假連結、以及 LINE／FB 分享卡片。</li><li><b>手機可閱讀性：</b>過濾側邊欄雜訊，揪出超過 200 字的文字牆與缺說明圖片。</li></ul><div class="actions" style="margin-top:10px"><button class="text-button" data-nav="gsc">GSC 顯示上百頁未索引？用分流器 1 秒拆解 →</button></div></section></div></div>`;
+  return intro('01 / 開始檢測', '輸入網址，馬上知道網頁該從哪裡改。', '不需登入後台或翻原始碼。貼上 WordPress 網址，30 秒整理出 Google／LINE 預覽、優先調整的 3 個重點與對應操作步驟。') +
+  `<div class="steps"><div class="step"><span class="step-num">STEP 1</span><b>貼上網址</b><small>不用登入後台或寫程式</small></div><div class="step"><span class="step-num">STEP 2</span><b>先改最重要的 3 件事</b><small>看 Google／LINE 預覽與具體步驟</small></div><div class="step"><span class="step-num">STEP 3</span><b>改完再測一次</b><small>確認修正前後的實際變化</small></div></div><div class="two-col"><div>${importPanel('before')}</div><div><section class="panel sample-panel"><span class="sample-tag">免網址試玩 · 示範資料</span><h2>還沒準備網址？先看示範。</h2><p>用一頁有常見問題的範例頁面，直接體驗「Google／LINE 預覽 → 優先修正清單 → 一鍵給 AI 改寫 → 前後比對」。</p><div class="actions" style="margin-top:12px"><button id="sample-before" class="primary" ${state.before.length ? 'disabled' : ''}>載入示範頁面</button><button class="quiet" data-nav="faq">常見問題（SEO / AIO / GEO）</button></div></section><section class="panel"><h2>會幫你檢查哪些重點？</h2><ul class="help-list"><li><b>Google 搜尋與爬蟲（SEO）：</b>標題、簡介、robots.txt、X-Robots-Tag、以及有沒有誤裝兩套衝突的 SEO 外掛。</li><li><b>AI 摘要與引用結構（AIO / GEO）：</b>主標題 H1、H2／H3 大綱層級、Schema 類型、作者與更新日期。</li><li><b>內外鏈與社群分享：</b>抓出「點這裡」空泛連結、無效假連結、以及 LINE／FB 分享卡片。</li><li><b>手機可閱讀性：</b>過濾側邊欄雜訊，揪出超過 200 字的文字牆與缺說明圖片。</li></ul><div class="actions" style="margin-top:10px"><button class="text-button" data-nav="gsc">GSC 顯示上百頁未索引？用分流器 1 秒拆解 →</button></div></section></div></div>`;
 }
 
 function renderDimensionSummary(audits) {
@@ -258,32 +258,32 @@ function renderGscTriage() {
 function renderFaq() {
   const faqs = [
     {
-      q: '1. 我是開店的業主／念美術系、餐飲系或高中生，完全不懂程式，也能用這個工具嗎？',
-      a: '完全可以！你只要會「複製網址 → 貼上 → 按按鈕」就好。這個工具本來就是為了沒有資訊背景的人設計的：它會把看不懂的網頁程式碼，翻成「就像整理店面招牌與菜單一樣」的白話步驟，告訴你進到 WordPress 後台要點哪裡、改哪一行。',
+      q: '1. 沒有技術背景，或不熟悉 SEO 術語，也能使用這個工具嗎？',
+      a: '可以。操作過程不需要寫程式，也不用看懂原始碼。貼上網址後，系統會直接整理出優先調整項目，並標明在 WordPress 後台對應的欄位與修改方式，方便你自行處理，或直接交給合作夥伴與 AI 協助。',
     },
     {
-      q: '2. 大家常說的 SEO 跟 AIO 到底是什麼？可以用生活例子講嗎？',
-      a: '把 Google 想像成一間超大的圖書館：\n• SEO（搜尋引擎優化）就像幫你的書寫好「清楚的書名、目錄、分類卡」，讓讀者走進圖書館時找得到你這本書。\n• AIO（AI 摘要優化）就像把書裡每一段重點條列清楚，當客人直接問「圖書館的 AI 店員」時，店員能直接看懂並引用你的內容回答客人。',
+      q: '2. SEO、AIO、GEO 分別代表什麼？有什麼差別？',
+      a: '這三者對應的是使用者找到你網站的三種管道，可以把網路資訊想像成一座大型圖書館：\n• SEO（搜尋引擎優化）：對應 Google、Bing 等傳統搜尋結果排名。就像把書名、目錄與分類卡整理清楚，讓大家搜尋關鍵字時找得到你、也願意點進來。\n• AIO（AI 摘要優化）：對應 Google 搜尋結果最上方的 AI 摘要框（AI Overviews）。把段落重點與結論寫清楚，讓搜尋引擎的 AI 摘要能直接擷取並標註你的來源。\n• GEO（生成式引擎優化）：對應 ChatGPT、Perplexity、Gemini、Claude 等對話式 AI。當內容結構清晰、資訊具體且可驗證時，使用者直接向 AI 提問或比較方案，AI 更有機會引用你的網站作為回答依據。\n\n三者並不衝突——清楚的標題層級、正確的 Schema 與紮實的內容結構，正是同時做好 SEO、AIO 與 GEO 的共同基礎。',
     },
     {
-      q: '3. 為什麼 Google Search Console 顯示一百多頁「未建立索引」？網站壞掉了嗎？',
-      a: '通常沒壞！就像一家餐廳不會把「廚房收據、舊店搬家公告、進貨單」擺到展示櫥窗一樣，WordPress 網站本來就會自動產生很多給系統看的網址（例如 /feed/ 通知檔、樣式檔、站內搜尋頁）。你可以直接點左側「06 未索引分流」貼上清單，1 秒就能看出真正該救的頁面有幾頁。',
+      q: '3. Google Search Console 顯示上百頁「未建立索引」，代表網站出問題了嗎？',
+      a: '大多數情況並非網站故障。WordPress 本身會自動產生許多系統用途的網址（例如 /feed/ 訂閱檔、佈景樣式檔、站內搜尋頁或舊版轉址），Google 本來就不會將這些頁面納入搜尋結果。你可以到左側「06 未索引分流」貼上 GSC 匯出的清單，系統會直接在瀏覽器內分類，幫你快速區分哪些是正常的系統網址、哪些才是真正需要處理的內容頁。',
     },
     {
-      q: '4. 把網址貼進來檢查，會不會改壞我的網站，或外洩後台資料？',
-      a: '完全不會。這個工具不需要你的帳號密碼，也不會連進你的 WordPress 後台；它就像一般路人打開網頁一樣只看公開畫面，而且資料分析全部在你的瀏覽器裡完成。真正要修改時，還是由你自己決定要不要進後台改。',
+      q: '4. 輸入網址檢測，會修改我的網站或接觸到後台資料嗎？',
+      a: '不會。這個工具不需要任何帳號密碼，也不會連線到你的 WordPress 後台；它只讀取一般訪客本來就看得到的公開頁面與 robots.txt，所有比對與分析都在你的瀏覽器內完成。是否要修改網站，完全由你自行決定。',
     },
     {
-      q: '5. 照著清單全部修完之後，明天就會衝到 Google 第一頁嗎？',
-      a: '不會馬上第一頁，老實說任何保證「明天就第一名」的說法都要小心。修好標題、段落、連結與速度，就像把店面打掃乾淨、招牌點亮，讓 Google 與客人願意進來；但 Google 需要幾天到幾週重新造訪，通常建議觀察完整 28 天再看數據變化。',
+      q: '5. 把清單上的項目都修完，排名很快就會上升到第一頁嗎？',
+      a: '不會立刻見效，任何保證「短期內上第一頁」的說法都值得保留態度。改善標題、內容結構、內鏈與載入速度，能讓搜尋引擎與 AI 更準確理解你的頁面價值；但 Google 重新抓取與評估需要時間，實務上建議調整後至少觀察 28 天的搜尋表現變化。',
     },
     {
-      q: '6. 我沒有裝 GA4，要怎麼知道客人是從哪篇文章進來填聯絡表單的？',
-      a: '不用一開始就學複雜的 GA4！如果你的網站每月訪客還不多，只要在聯絡表單（例如 Fluent Forms）加 3 個客人看不到的「隱藏欄位」（進站第一頁、來源網址、送單頁），搭配短短 15 行瀏覽器紀錄腳本，客人送出詢價時，後台就會自動幫你記下「他是看完哪篇文章來問的」。',
+      q: '6. 還沒設定 GA4 的情況下，有辦法知道客戶是看完哪篇文章才填聯絡表單嗎？',
+      a: '可以採用較輕量的替代做法。若網站現階段還不需要完整的 GA4 報表，可以在聯絡表單（例如 Fluent Forms）加入 3 個隱藏欄位（進站首頁、來源網址、送單頁面），再請工程師或透過 AI 協助加上一段簡短的前端紀錄腳本，就能在收到詢價時一併看到訪客的瀏覽來源。',
     },
   ];
-  return intro('新手 FAQ', '完全沒學過網站或 SEO？花 2 分鐘看懂全部重點。', '用白話與生活比喻回答業主、行銷新手與非資訊科系學生最常問的 6 個問題，不塞生硬術語。') +
-  `<section class="panel">${faqs.map((item, i) => `<details ${i < 2 ? 'open' : ''} style="margin-bottom:14px"><summary><b>${e(item.q)}</b></summary><p style="white-space:pre-line;margin:10px 0 4px">${e(item.a)}</p></details>`).join('')}<div class="actions" style="margin-top:18px"><button class="primary" data-nav="start">懂了，開始檢查我的網址 →</button><button class="quiet" data-nav="gsc">去試試 GSC 未索引分流器</button></div></section>`;
+  return intro('常見問題', '關於網站檢測與 SEO、AIO、GEO 的常見問題', '整理網站經營者最常遇到的 6 個實務疑問，幫助你快速掌握檢測邏輯與改善方向。') +
+  `<section class="panel">${faqs.map((item, i) => `<details ${i < 2 ? 'open' : ''} style="margin-bottom:14px"><summary><b>${e(item.q)}</b></summary><p style="white-space:pre-line;margin:10px 0 4px">${e(item.a)}</p></details>`).join('')}<div class="actions" style="margin-top:18px"><button class="primary" data-nav="start">開始檢查我的網站 →</button><button class="quiet" data-nav="gsc">試用 GSC 未索引分流器</button></div></section>`;
 }
 
 function renderHelp() {

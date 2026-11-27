@@ -7,7 +7,7 @@
 <meta name="description" content="WP Search Lab：把 WordPress 網站的檢測證據轉為改善計畫、AI 指令與重新驗證。輸入網址直接檢測，無需 API Key。">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'; img-src data:; base-uri 'none'; form-action 'none'; object-src 'none'">
 <title>WP Search Lab · Nio｜線上網站檢測</title><meta name="theme-color" content="#fcfaf6"><link rel="canonical" href="https://portfolio-site-1b8.pages.dev/tools/wp-search-lab/">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"完全不懂程式或 SEO，也能用 WP Search Lab 嗎？","acceptedAnswer":{"@type":"Answer","text":"可以。只要會複製貼上網址就能用，結果會翻譯成白話步驟，告訴你在 WordPress 哪個欄位修改，不用看懂程式碼。"}},{"@type":"Question","name":"SEO 跟 AIO 到底是什麼？","acceptedAnswer":{"@type":"Answer","text":"可以把 Google 想像成一間超大圖書館：SEO 是幫你的網頁寫清楚書名與分類卡，讓大家找得到；AIO 是把重點整理清楚，讓 AI 店員直接引用你的內容回答客人。"}},{"@type":"Question","name":"使用這個工具會不會動到或改壞我的網站？","acceptedAnswer":{"@type":"Answer","text":"不會。這個工具不需要你的帳號密碼，只像一般訪客一樣讀取公開網頁，分析過程也在你的瀏覽器裡完成，完全不會修改你的網站。"}}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"沒有技術背景或沒學過 SEO，也能操作這個工具嗎？","acceptedAnswer":{"@type":"Answer","text":"可以。輸入公開網址即可開始，不需要寫程式，也不用先背技術術語。工具會把檢測結果整理成優先順序，直接對應到 WordPress 後台的調整位置與修改建議。"}},{"@type":"Question","name":"SEO、AIO、GEO 各自是什麼？差在哪裡？","acceptedAnswer":{"@type":"Answer","text":"三者對應三種被找到的管道：SEO 著重 Google 等傳統搜尋結果的排名與點擊；AIO 針對搜尋結果頂端的 AI 摘要框（AI Overviews），讓重點能被準確摘錄；GEO 則是面向 ChatGPT、Perplexity、Gemini、Claude 等對話式 AI，讓可驗證的優質內容在回答中被引用。良好的網頁結構與內容清楚度，是同時兼顧三者的共同基礎。"}},{"@type":"Question","name":"使用這個工具會修改我的網站，或需要提供後台帳密嗎？","acceptedAnswer":{"@type":"Answer","text":"不會。本工具只讀取公開網頁與 robots.txt，不需登入 WordPress，所有分析都在瀏覽器本機完成，絕不會更動你的網站內容。"}}]}</script>
 <style>/*__STYLE__*/</style>
 </head>
 <body>
@@ -24,12 +24,12 @@
 <button data-nav="prompt" class="nav-item"><span>04</span>請 AI 協助</button>
 <button data-nav="verify" class="nav-item"><span>05</span>重新驗證</button>
 <button data-nav="gsc" class="nav-item"><span>06</span>未索引分流</button>
-<button data-nav="faq" class="nav-item"><span>?</span>新手 FAQ</button>
+<button data-nav="faq" class="nav-item"><span>?</span>常見問題</button>
 </nav>
 <div class="sidebar-bottom"><span class="privacy-dot"></span>分析在瀏覽器中進行<p>公開網址由本站服務讀取。<br>關閉前請匯出報告。</p><button class="text-button" data-nav="help">使用方式與能力邊界</button></div>
 </aside>
 <div class="main-shell">
-<header class="topbar"><div><span class="eyebrow">WORDPRESS · SEO / AIO</span><span class="session-label" id="session-label">尚未載入網站</span></div><button class="quiet" id="reset-session">開始新檢測</button></header>
+<header class="topbar"><div><span class="eyebrow">WORDPRESS · SEO / AIO / GEO</span><span class="session-label" id="session-label">尚未載入網站</span></div><button class="quiet" id="reset-session">開始新檢測</button></header>
 <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
 <main id="main" tabindex="-1"></main>
 <footer class="footer">依據可追溯的證據改善網站。技術檢測不代表排名、流量或 AI 引用率提升。 <button class="text-button" data-nav="help">版本、來源與授權</button></footer>

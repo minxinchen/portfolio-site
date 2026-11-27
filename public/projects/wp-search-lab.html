@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <script>try{const s=localStorage.getItem("color-scheme");if(s==="light"||s==="dark")document.querySelector('meta[name="color-scheme"]').content=s;}catch{}</script>
-  <meta name="description" content="繁體中文 WordPress SEO／AIO 檢測工作台：單頁與 Sitemap 全站抽樣、內外鏈建議、Google Lighthouse 分數與跨日進度保存。">
+  <meta name="description" content="繁體中文 WordPress SEO／AIO／GEO 檢測工作台：單頁與 Sitemap 全站抽樣、GSC 未索引分流、內外鏈建議、Google Lighthouse 分數與跨日進度保存。">
   <title>WP Search Lab · Nio Chen</title>
   <meta name="author" content="Nio Chen">
   <link rel="canonical" href="https://portfolio-site-1b8.pages.dev/projects/wp-search-lab.html">
   <meta property="og:title" content="WP Search Lab · Nio Chen">
-  <meta property="og:description" content="給 No-code 網站經營者的 WordPress SEO／AIO 體檢台：全站抽樣、內鏈建議、Lighthouse 分數與前後驗證。">
+  <meta property="og:description" content="給網站經營者的 WordPress SEO／AIO／GEO 體檢台：全站抽樣、GSC 未索引分流、內鏈建議、Lighthouse 分數與前後驗證。">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://portfolio-site-1b8.pages.dev/projects/wp-search-lab.html">
   <meta property="og:image" content="https://portfolio-site-1b8.pages.dev/assets/og-card.png">
@@ -19,7 +19,7 @@
 <body>
   <header class="site-header">
     <div class="container head-inner">
-      <a class="logo" href="../index.html" aria-label="Nio 首頁"><strong>nio<span>.</span>chen</strong><small>LAB &amp; NOTES</small></a>
+      <a class="logo" href="../index.html" aria-label="Nio 首頁"><strong>Nio<span>.</span>Chen</strong><small>LAB &amp; NOTES</small></a>
       <nav class="site-nav" id="main-nav" aria-label="主選單">
         <a href="../index.html">首頁</a>
         <a href="../projects/index.html" aria-current="page">作品與實驗室</a>
@@ -42,7 +42,7 @@
       <div class="case-header">
         <div>
           <a class="back-link" href="index.html">← 返回作品與實驗室</a>
-          <p style="margin-top:16px" class="smallcaps">WORDPRESS × GOOGLE SEO / AIO × NO-CODE UX</p>
+          <p style="margin-top:16px" class="smallcaps">WORDPRESS × SEO / AIO / GEO × NO-CODE UX</p>
           <h1>WP Search Lab</h1>
           <p>讓不懂程式的 WordPress 經營者輸入網址，30 秒看懂最該先改哪 3 件事，並在修改後重新驗證。</p>
           <div class="case-meta"><span class="pill">可直接操作</span><span class="pill">繁體中文</span><span class="pill">42 項自動化測試＋CI</span></div>
@@ -64,7 +64,7 @@
         <nav class="case-sidebar" aria-label="案例章節">
           <a href="#problem">01 · 解決的問題</a>
           <a href="#workflow">02 · 核心功能</a>
-          <a href="#faq">03 · 新手白話 FAQ</a>
+          <a href="#faq">03 · 常見問題（FAQ）</a>
           <a href="#division">04 · 個人決策 vs. 開源與 AI</a>
           <a href="#limits">05 · 實測修正與限制</a>
         </nav>
@@ -87,19 +87,19 @@
           </section>
 
           <section id="faq">
-            <h2>給業主與非本科系新手的白話 FAQ</h2>
-            <p>不管你是第一次管公司網站的老闆，還是念餐飲、美術、中文系的大學生，這 3 個問題用生活例子 1 分鐘就懂：</p>
+            <h2>常見問題：SEO、AIO、GEO 與使用方式</h2>
+            <p>快速了解工具的操作門檻、三種搜尋優化的差別，以及網站資料的安全性。</p>
             <details open>
-              <summary><strong>完全不懂程式或 SEO，也能用這個工具嗎？</strong></summary>
-              <p>可以。只要會「複製網址 → 貼上 → 按開始」，工具會把網頁程式碼翻成白話步驟，直接告訴你進 WordPress 後台要點哪個欄位，完全不用背英文術語。</p>
+              <summary><strong>沒有技術背景或沒學過 SEO，也能操作這個工具嗎？</strong></summary>
+              <p>可以。輸入公開網址即可開始，不需要寫程式，也不用先背技術術語。工具會把檢測結果整理成優先順序，直接對應到 WordPress 後台的調整位置與修改建議。</p>
             </details>
             <details>
-              <summary><strong>SEO 跟 AIO 到底差在哪裡？</strong></summary>
-              <p>把 Google 想像成一間超大圖書館：<strong>SEO</strong> 就像幫你的書寫好清楚的書名與分類卡，讓大家找得到；<strong>AIO</strong> 則是把每段重點整理好，讓「AI 店員」可以直接引用你的段落回答客人。</p>
+              <summary><strong>SEO、AIO、GEO 各自是什麼？差在哪裡？</strong></summary>
+              <p>三者對應三種被找到的管道：<strong>SEO</strong> 著重 Google 等傳統搜尋結果的排名與點擊；<strong>AIO</strong> 針對搜尋結果頂端的 AI 摘要框（AI Overviews），讓重點能被準確摘錄；<strong>GEO</strong> 則是面向 ChatGPT、Perplexity、Gemini、Claude 等對話式 AI，讓可驗證的優質內容在回答中被引用。良好的網頁結構與內容清楚度，是同時兼顧三者的共同基礎。</p>
             </details>
             <details>
-              <summary><strong>會不會改壞我的網站，或要我輸入密碼？</strong></summary>
-              <p>不會。它不需要你的帳號密碼，只像一般訪客一樣讀取公開網頁，分析過程也在你自己的瀏覽器內完成，絕對不會動到你的網站。</p>
+              <summary><strong>使用這個工具會修改我的網站，或需要提供後台帳密嗎？</strong></summary>
+              <p>不會。本工具只讀取公開網頁與 <code>robots.txt</code>，不需登入 WordPress，所有分析都在瀏覽器本機完成，絕不會更動你的網站內容。</p>
             </details>
           </section>
 
@@ -134,7 +134,7 @@
   <footer class="footer">
     <div class="container footer-inner">
       <div>
-        <a class="logo" href="../index.html"><strong>nio<span>.</span>chen</strong><small>LAB &amp; NOTES</small></a>
+        <a class="logo" href="../index.html"><strong>Nio<span>.</span>Chen</strong><small>LAB &amp; NOTES</small></a>
         <p>Built for readability &amp; verification. © 2026 Nio Chen</p>
       </div>
       <div class="footer-links">
